@@ -73,10 +73,9 @@ void loop() {
       for (int i = 0; i < pixy.ccc.numBlocks; i++) {
         if (pixy.ccc.blocks[i].m_signature == 1) {
           // Use the x-position of the vector's tail (closest to robot)
-          int x_head = pixy.ccc.blocks[0].m_x1;
-          int x_tail = pixy.line.vectors[0].m_x0;
-
-          int x = x_tail + 0.5*(x_head - x_tail); // x at it's mid point
+          int x = pixy.ccc.blocks[0].m_x;
+          // int x_tail = pixy.line.vectors[0].m_x0;
+          // int x = x_tail + 0.5*(x_head - x_tail); // x at it's mid point
           // Calculate error (setpoint - current position)
           double error = setpoint - x;
 
