@@ -1,4 +1,5 @@
 // #include <PID_v1.h>
+// Follows tail of line
 #include <Pixy2.h>
 
 Pixy2 pixy;
@@ -21,7 +22,7 @@ double integral = 0;        // For integral term
 unsigned long previous_time = 0;  // For time step calculation
 
 // Motor base speed (adjust based on your robot's desired speed)
-int base_speed = 80;
+int base_speed = 75;
 bool go = false;
 
 
