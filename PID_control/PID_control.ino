@@ -69,8 +69,10 @@ void loop() {
     // Check if at least one vector (line) is detected
     if (pixy.line.numVectors > 0) {
       // Use the x-position of the vector's tail (closest to robot)
-      int x_head = pixy.line.vectors[1].m_x1;
+      int x_head = pixy.line.vectors[0].m_x1;
       int x_tail = pixy.line.vectors[0].m_x0;
+
+      int x = x_tail + 0.5*(x_head - x_tail) // x at it's mid point
 
       // Calculate error (setpoint - current position)
       double error = setpoint - x;
