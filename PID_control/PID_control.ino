@@ -14,7 +14,7 @@ const int START_SIG = 22; // Pin 22 is connected to button
 // PID constants (tune these values based on your robot's behavior)
 double Kp = 1.2;  // Proportional gain
 double Ki = 0.0;  // Integral gain (may not be needed for line following)
-double Kd = 0.04;  // Derivative gain (start at 0 before tuning)
+double Kd = 0.07;  // Derivative gain (start at 0 before tuning)
 
 // PID variables
 double setpoint = 39;       // Center of Pixy's frame (79/2)
@@ -23,7 +23,8 @@ double integral = 0;        // For integral term
 unsigned long previous_time = 0;  // For time step calculation
 
 // Motor base speed (adjust based on your robot's desired speed)
-int base_speed = 65;
+int base_speed_u2 = 57;
+int base_speed_u3 = base_speed_u2 + 5;
 bool go = false;
 
 
@@ -42,6 +43,7 @@ void setup() {
   // Initialize Pixy2 camera
   pixy.init();
   pixy.changeProg("line");
+  pixy.setLamp(1, 0);
 
   // Record initial time
   previous_time = millis();
@@ -91,8 +93,8 @@ void loop() {
       previous_error = error;
 
       // Calculate motor speeds (differential drive)
-      int left_speed = constrain(base_speed + output, -150, 150);
-      int right_speed = constrain(base_speed - output, -150, 150);
+      int left_speed = constrain(base_speed_u3 + output, -150, 150);
+      int right_speed = constrain(base_speed_u2 - output, -150, 150);
 
       // Apply speeds to motors
       setMotorSpeeds(left_speed, right_speed);

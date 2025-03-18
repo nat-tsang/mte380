@@ -12,7 +12,7 @@ const int ENCODER_IN4 = 17; // Drive 2
 const int ENCODER_IN5 = 14; // Drive 1 NEW PINS (right) connected to U2
 const int ENCODER_IN6 = 21; // Drive 1 NEW PINS
 
-int inputPWM = 100;
+int inputPWM = 57;
 
 Encoder drive1Encoder(ENCODER_IN5, ENCODER_IN6);    // This will also set the pins as INPUT
 Encoder drive2Encoder(ENCODER_IN3, ENCODER_IN4);  // left
@@ -68,7 +68,7 @@ void loop() {
 }
 
 void moveFwd(int speed){    // Move Left and RIGHT wheel forward (IN1 = HIGH, IN2 = LOW)
-  analogWrite(LEFT_IN1, speed);
+  analogWrite(LEFT_IN1, speed + 5);
   analogWrite(LEFT_IN2, LOW);
   analogWrite(RIGHT_IN1, LOW);
   analogWrite(RIGHT_IN2, speed);
