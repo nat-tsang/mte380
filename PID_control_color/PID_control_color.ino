@@ -12,7 +12,7 @@ const int u3_IN1 = 7; // left
 const int START_SIG = 22; // Pin 22 is connected to button
 
 // PID constants (tune these values based on your robot's behavior)
-double Kp = 0.6;  // Proportional gain
+double Kp = 0.5;  // Proportional gain
 double Ki = 0.0;  // Integral gain (may not be needed for line following)
 double Kd = 0.08;  // Derivative gain (start at 0 before tuning)
 
@@ -74,10 +74,12 @@ void loop() {
         if (pixy.ccc.blocks[i].m_signature == 1) {
           // Use the x-position of the vector's tail (closest to robot)
           int x = pixy.ccc.blocks[0].m_x;
-          // int x_tail = pixy.line.vectors[0].m_x0;
-          // int x = x_tail + 0.5*(x_head - x_tail); // x at it's mid point
+
           // Calculate error (setpoint - current position)
           double error = setpoint - x;
+          if (abs(error) < 1.5) { 
+            error = 0; // Filter out wobble/correction for very small errors
+          }
 
           // Update integral term
           integral += error * dt;
@@ -97,21 +99,30 @@ void loop() {
 
           // Apply speeds to motors
           setMotorSpeeds(left_speed, right_speed);
+          // setMotorSpeeds(0,0);
 
           // Debug output
-          Serial.print("x: ");
-          Serial.print(x);
-          Serial.print(" error: ");
-          Serial.print(error);
-          Serial.print(" output: ");
-          Serial.print(output);
-          Serial.print(" left_speed: ");
-          Serial.print(left_speed);
-          Serial.print(" right_speed: ");
-          Serial.println(right_speed);
-        } else {
-          setMotorSpeeds(0, 0);
-          Serial.println("No line detected");
+          // Serial.print("x: ");
+          // Serial.print(x);
+          // Serial.print(" error: ");
+          // Serial.print(error);
+          // Serial.print(" output: ");
+          // Serial.print(output);
+          // Serial.print(" left_speed: ");
+          // Serial.print(left_speed);
+          // Serial.print(" right_speed: ");
+          // Serial.println(right_speed);
+        } else if (pixy.ccc.blocks[i].m_signature == 2) {
+          // Serial.print("found bullseye");
+          // Serial.print(pixy.ccc.blocks[i].m_width);
+          // Serial.println(pixy.ccc.blocks[i].m_height);
+          if (pixy.ccc.blocks[i].m_width > 30 && pixy.ccc.blocks[i].m_height > 64){
+            setMotorSpeeds(0, 0);
+            go = false;
+            Serial.println("Bullseye Detected in range");
+          } else {
+            Serial.println("No bullseye in stopping range");
+          }
         }
       }
     } else {
@@ -122,17 +133,9 @@ void loop() {
   }
   else {
     // If off, turn motors off (brake)
-    brake();
+    setMotorSpeeds(0, 0);
   }
 }
-
-void brake() {
-  analogWrite(u2_IN1, HIGH);
-  analogWrite(u2_IN2, HIGH);
-  analogWrite(u3_IN1, HIGH);
-  analogWrite(u3_IN2, HIGH); 
-}
-
 
 
 // Function to set motor speeds and directions
