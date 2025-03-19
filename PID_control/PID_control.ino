@@ -3,6 +3,11 @@
 #include <Pixy2.h>
 
 Pixy2 pixy;
+const int ENCODER_IN3 = 16; // Drive 2 connected to U3
+const int ENCODER_IN4 = 17; // Drive 2
+const int ENCODER_IN5 = 14; // Drive 1 NEW PINS (right) connected to U2
+const int ENCODER_IN6 = 21; // Drive 1 NEW PINS
+
 const int FAN = 20;
 const int u2_IN2 = 8; 
 const int u2_IN1 = 9; 
@@ -11,10 +16,18 @@ const int u3_IN1 = 7; // left
 
 const int START_SIG = 22; // Pin 22 is connected to button
 
+const int targetSpeed = 700; // Desired speed in counts per second
+
+Encoder drive1Encoder(ENCODER_IN5, ENCODER_IN6);    // This will also set the pins as INPUT
+Encoder drive2Encoder(ENCODER_IN3, ENCODER_IN4);  // left
+
+long lastLeftPos = 0;
+long lastRightPos = 0;
+
 // PID constants (tune these values based on your robot's behavior)
-double Kp = 1.2;  // Proportional gain
+double Kp = 1.31;  // Proportional gain
 double Ki = 0.0;  // Integral gain (may not be needed for line following)
-double Kd = 0.07;  // Derivative gain (start at 0 before tuning)
+double Kd = 0.09;  // Derivative gain (start at 0 before tuning)
 
 // PID variables
 double setpoint = 39;       // Center of Pixy's frame (79/2)
@@ -23,9 +36,11 @@ double integral = 0;        // For integral term
 unsigned long previous_time = 0;  // For time step calculation
 
 // Motor base speed (adjust based on your robot's desired speed)
-int base_speed_u2 = 57;
-int base_speed_u3 = base_speed_u2 + 5;
+// int base_speed_u2 = 60;
+// int base_speed_u3 = base_speed_u2 + 0;
+
 bool go = false;
+unsigned long lastTime = 0;
 
 
 void setup() {
@@ -67,6 +82,7 @@ void loop() {
     double dt = (current_time - previous_time) / 1000.0;
     previous_time = current_time;
 
+    measureSpeed();
     // Get line features from Pixy
     pixy.line.getMainFeatures();
 
@@ -118,17 +134,41 @@ void loop() {
   }
   else {
     // If off, turn motors off (brake)
-    brake();
+    setMotorSpeeds(0,0);
   }
 }
 
-void brake() {
-  analogWrite(u2_IN1, HIGH);
-  analogWrite(u2_IN2, HIGH);
-  analogWrite(u3_IN1, HIGH);
-  analogWrite(u3_IN2, HIGH); 
-}
 
+void determinePWM() {
+  long currentLeftPos = drive2Encoder.read();
+  long currentRightPos = drive1Encoder.read();
+  unsigned long currentTime = millis();
+
+  long leftChange = currentLeftPos - lastLeftPos;
+  long rightChange = currentRightPos - lastRightPos;
+  unsigned long timeChange = currentTime - lastTime;
+
+  if (timeChange > 0) { // Prevent divide by zero
+    float leftSpeedCPS = (leftChange / (float)timeChange) * 1000.0;  // Counts per second
+    float rightSpeedCPS = (rightChange / (float)timeChange) * 1000.0;
+
+    if (leftSpeedCPS || rightSpeedCPS){   // Turn LED HIGH if wheels are spinning
+      digitalWrite(LED_BUILTIN, HIGH);
+    }
+    Serial.print("PWM: ");
+    Serial.print(pwmValue);
+    Serial.print(" | Left Speed: ");
+    Serial.print(leftSpeedCPS);
+    Serial.print(" cps | Right Speed: ");
+    Serial.print(rightSpeedCPS);
+    Serial.println(" cps");
+  }
+
+  // Update last values for next iteration
+  lastLeftPos = currentLeftPos;
+  lastRightPos = currentRightPos;
+  lastTime = currentTime;
+}
 
 
 // Function to set motor speeds and directions
@@ -144,7 +184,6 @@ void setMotorSpeeds(int left_speed, int right_speed) {
     analogWrite(u2_IN1, HIGH);
     analogWrite(u2_IN2, HIGH);
   }
-
   // Control right motor
   if (right_speed > 0) {
     analogWrite(u3_IN1, right_speed);
