@@ -12,7 +12,7 @@ const int u3_IN1 = 7; // left
 const int START_SIG = 22; // Pin 22 is connected to button
 
 // PID constants (tune these values based on your robot's behavior)
-double Kp = 1.2;  // Proportional gain
+double Kp = 1.0;  // Proportional gain
 double Ki = 0.0;  // Integral gain (may not be needed for line following)
 double Kd = 0.07;  // Derivative gain (start at 0 before tuning)
 

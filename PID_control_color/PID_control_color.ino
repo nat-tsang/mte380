@@ -12,18 +12,18 @@ const int u3_IN1 = 7; // left
 const int START_SIG = 22; // Pin 22 is connected to button
 
 // PID constants (tune these values based on your robot's behavior)
-double Kp = 1.2;  // Proportional gain
+double Kp = 0.6;  // Proportional gain
 double Ki = 0.0;  // Integral gain (may not be needed for line following)
-double Kd = 0.04;  // Derivative gain (start at 0 before tuning)
+double Kd = 0.08;  // Derivative gain (start at 0 before tuning)
 
 // PID variables
-double setpoint = 39;       // Center of Pixy's frame (79/2)
+double setpoint = 157.5;       // Center of Pixy's frame (315/2)
 double previous_error = 0;  // For derivative calculation
 double integral = 0;        // For integral term
 unsigned long previous_time = 0;  // For time step calculation
 
 // Motor base speed (adjust based on your robot's desired speed)
-int base_speed = 65;
+int base_speed = 60;
 bool go = false;
 
 
