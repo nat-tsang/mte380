@@ -23,9 +23,8 @@ double integral = 0;        // For integral term
 unsigned long previous_time = 0;  // For time step calculation
 
 // Motor base speed (adjust based on your robot's desired speed)
-int base_speed = 60;
+int base_speed = 70;
 bool go = false;
-
 
 void setup() {
   // Start serial communication for debugging
@@ -77,7 +76,7 @@ void loop() {
 
           // Calculate error (setpoint - current position)
           double error = setpoint - x;
-          if (abs(error) < 1.5) { 
+          if (abs(error) < 5) { 
             error = 0; // Filter out wobble/correction for very small errors
           }
 
@@ -99,23 +98,8 @@ void loop() {
 
           // Apply speeds to motors
           setMotorSpeeds(left_speed, right_speed);
-          // setMotorSpeeds(0,0);
 
-          // Debug output
-          // Serial.print("x: ");
-          // Serial.print(x);
-          // Serial.print(" error: ");
-          // Serial.print(error);
-          // Serial.print(" output: ");
-          // Serial.print(output);
-          // Serial.print(" left_speed: ");
-          // Serial.print(left_speed);
-          // Serial.print(" right_speed: ");
-          // Serial.println(right_speed);
         } else if (pixy.ccc.blocks[i].m_signature == 2) {
-          // Serial.print("found bullseye");
-          // Serial.print(pixy.ccc.blocks[i].m_width);
-          // Serial.println(pixy.ccc.blocks[i].m_height);
           if (pixy.ccc.blocks[i].m_width > 30 && pixy.ccc.blocks[i].m_height > 64){
             setMotorSpeeds(0, 0);
             go = false;
@@ -136,7 +120,6 @@ void loop() {
     setMotorSpeeds(0, 0);
   }
 }
-
 
 // Function to set motor speeds and directions
 void setMotorSpeeds(int left_speed, int right_speed) {
