@@ -39,10 +39,11 @@ void loop() {
     }
     myServo.writeMicroseconds(minPulse);  // Move to 0° position
     Serial.println("Servo at min position");
-    
+    delay(200); // debouncing
     setMotorSpeeds(base_speed, base_speed);
     delay(2000);
     setMotorSpeeds(0, 0);
+    delay(200); // debouncing
     myServo.writeMicroseconds(maxPulse);  // Move to ~120° position
     Serial.println("Servo at max position");
   }
