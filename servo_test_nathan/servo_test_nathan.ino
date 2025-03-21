@@ -4,8 +4,8 @@
 Servo myServo;
 
 const int SERVO = 5;
-const int minPulse = 900;   // microseconds for ~0 degrees
-const int maxPulse = 2100;  // microseconds for ~120 degrees
+const int minPulse = 700;   // microseconds for ~0 degrees
+const int maxPulse = 2200;  // microseconds for ~120 degrees
 
 const int u2_IN2 = 8; 
 const int u2_IN1 = 9; 
@@ -14,7 +14,7 @@ const int u3_IN1 = 7; // left
 
 const int START_SIG = 22; // Pin 22 is connected to button
 
-int base_speed = 60; // PWM applied to motors
+int base_speed = 65; // PWM applied to motors
 bool go = false;
 
 void setup() {
@@ -29,6 +29,7 @@ void setup() {
 
   //Start Button
   myServo.attach(SERVO, minPulse, maxPulse);
+  myServo.writeMicroseconds(minPulse);  
 }
 
 void loop() {
@@ -38,13 +39,15 @@ void loop() {
       Serial.println("Button still pressed. Take finger off.");
     }
     myServo.writeMicroseconds(minPulse);  // Move to 0° position
+    delay(100);
+    myServo.writeMicroseconds(maxPulse);  // Move to 0° position
     Serial.println("Servo at min position");
     delay(200); // debouncing
     setMotorSpeeds(base_speed, base_speed);
-    delay(2000);
+    delay(1000);
     setMotorSpeeds(0, 0);
     delay(200); // debouncing
-    myServo.writeMicroseconds(maxPulse);  // Move to ~120° position
+    myServo.writeMicroseconds(minPulse);  // Move to ~120° position
     Serial.println("Servo at max position");
   }
   setMotorSpeeds(0, 0);
@@ -75,6 +78,5 @@ void setMotorSpeeds(int left_speed, int right_speed) {
     analogWrite(u3_IN2, HIGH); 
   }
 }
-
 
 

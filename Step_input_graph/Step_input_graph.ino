@@ -12,7 +12,7 @@ const int ENCODER_IN4 = 17; // Drive 2
 const int ENCODER_IN5 = 14; // Drive 1 NEW PINS (right) connected to U2
 const int ENCODER_IN6 = 21; // Drive 1 NEW PINS
 
-int inputPWM = 60;
+int inputPWM = 70;
 
 Encoder drive1Encoder(ENCODER_IN5, ENCODER_IN6);    // This will also set the pins as INPUT
 Encoder drive2Encoder(ENCODER_IN3, ENCODER_IN4);  // left
