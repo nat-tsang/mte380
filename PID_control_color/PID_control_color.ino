@@ -1,5 +1,4 @@
 // #include <PID_v1.h>
-// Follows tail of line
 #include <Pixy2.h>
 
 Pixy2 pixy;
