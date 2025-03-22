@@ -12,9 +12,11 @@ const int u2_IN1 = 9;
 const int u3_IN2 = 6;
 const int u3_IN1 = 7; // left 
 
+const int FAN_CTRL = 20;
+
 const int START_SIG = 22; // Pin 22 is connected to button
 
-int base_speed = 65; // PWM applied to motors
+int base_speed = 70; // PWM applied to motors
 bool go = false;
 
 void setup() {
@@ -27,9 +29,12 @@ void setup() {
   pinMode(u3_IN2, OUTPUT);
   pinMode(START_SIG, INPUT_PULLDOWN);
 
+  pinMode(FAN_CTRL, OUTPUT);
+  digitalWrite(FAN_CTRL, LOW); // Keep fan off
+
   //Start Button
   myServo.attach(SERVO, minPulse, maxPulse);
-  myServo.writeMicroseconds(minPulse);  
+  myServo.writeMicroseconds(maxPulse);  
 }
 
 void loop() {

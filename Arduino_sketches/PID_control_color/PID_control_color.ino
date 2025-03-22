@@ -28,7 +28,7 @@ double integral = 0;        // For integral term
 unsigned long previous_time = 0;  // For time step calculation
 
 // Motor base speed (adjust based on your robot's desired speed)
-int base_speed = 70;
+int base_speed = 75;
 bool go = false;
 
 void setup() {
@@ -48,7 +48,7 @@ void setup() {
   // Initialize Pixy2 camera
   pixy.init();
   pixy.changeProg("color_connected_components");
-  myServo.writeMicroseconds(minPulse);
+  myServo.writeMicroseconds(maxPulse);
   // Record initial time
   previous_time = millis();
 }
@@ -84,7 +84,8 @@ void loop() {
 
           // Calculate error (setpoint - current position)
           double error = setpoint - x;
-          if (abs(error) < 5) { 
+          // working at 5, setting to 10 to match fan testing
+          if (abs(error) < 10) { 
             error = 0; // Filter out wobble/correction for very small errors
           }
 
