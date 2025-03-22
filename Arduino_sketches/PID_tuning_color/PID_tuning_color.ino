@@ -1,4 +1,3 @@
-// #include <PID_v1.h>
 #include <Pixy2.h>
 
 Pixy2 pixy;
