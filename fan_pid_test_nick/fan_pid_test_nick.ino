@@ -1,4 +1,5 @@
 // #include <PID_v1.h>
+// Follows tail of line
 #include <Pixy2.h>
 #include <Servo.h>
 
@@ -12,6 +13,8 @@ const int u3_IN1 = 7; // left
 
 const int START_SIG = 22; // Pin 22 is connected to button
 const int SERVO = 5;
+
+const int FAN_CTRL = 20;
 
 const int minPulse = 700;   // microseconds for ~0 degrees
 const int maxPulse = 2000;  // microseconds for ~120 degrees
@@ -39,8 +42,8 @@ void setup() {
   pinMode(u2_IN2, OUTPUT);
   pinMode(u3_IN1, OUTPUT);
   pinMode(u3_IN2, OUTPUT);
-  pinMode(FAN, OUTPUT);
-  digitalWrite(FAN, LOW); // Keep fan off
+  pinMode(FAN_CTRL, OUTPUT);
+  digitalWrite(FAN_CTRL, LOW); // Keep fan off
   pinMode(START_SIG, INPUT_PULLDOWN);
   myServo.attach(SERVO, minPulse, maxPulse);
 
@@ -53,9 +56,7 @@ void setup() {
   previous_time = millis();
 }
 
-void loop() {
-
-  // static bool lastButtonState = LOW;        
+void loop() {        
   int buttonState = digitalRead(START_SIG);
   if (buttonState) {
     while(digitalRead(START_SIG)){
@@ -71,15 +72,11 @@ void loop() {
     double dt = (current_time - previous_time) / 1000.0;
     previous_time = current_time;
 
-    // Get colour features  features from Pixy
     pixy.ccc.getBlocks();
 
-    myServo.writeMicroseconds(maxPulse);
-    // Check if at least one vector (line) is detected
     if (pixy.ccc.getBlocks() > 0) {
       for (int i = 0; i < pixy.ccc.numBlocks; i++) {
         if (pixy.ccc.blocks[i].m_signature == 1) {
-          // Use the x-position of the vector's tail (closest to robot)
           int x = pixy.ccc.blocks[0].m_x;
 
           // Calculate error (setpoint - current position)
@@ -106,19 +103,15 @@ void loop() {
 
           // Apply speeds to motors
           setMotorSpeeds(left_speed, right_speed);
+          // Turn fan on
+          digitalWrite(FAN_CTRL, HIGH);
 
         } else if (pixy.ccc.blocks[i].m_signature == 2) {
-          // pixy.ccc.blocks[i].print();
-          // int x_range = 165 - pixy.ccc.blocks[i].m_x;
-          // int y_range = pixy.ccc.blocks[i].m_y;
-          // if (abs(x_range) < 50 && y_range > 45){
-            myServo.writeMicroseconds(maxPulse);
-            // brake();
-            // go = false;
+            // Start braking when bullseye is seen
+            brake();
+            digitalWrite(FAN_CTRL, LOW);
+            go = false;
             Serial.println("Bullseye Detected in range");
-          // } else {
-          //   Serial.println("No bullseye in stopping range");
-          // }
         }
       }
     } else {
@@ -128,12 +121,12 @@ void loop() {
     }
   }
   else {
-    // If off, turn motors off (brake)
+    // If off, turn motors off
     setMotorSpeeds(0, 0);
   }
 }
 
-// Function to set motor speeds and directions
+// Helper functions, name should be explanatory
 void setMotorSpeeds(int left_speed, int right_speed) {
   // Control left motor
   if (left_speed > 0) {
@@ -161,6 +154,7 @@ void setMotorSpeeds(int left_speed, int right_speed) {
 }
 
 void brake() {
+  // set quick negative pwm to motors to counteract inertia?
   setMotorSpeeds(-60, -60);
   delay(200);
   setMotorSpeeds(0, 0);
