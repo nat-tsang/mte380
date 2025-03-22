@@ -22,8 +22,8 @@ void Motor::setSpeed(int speed) {
         analogWrite(in2Pin, -actualSpeed);
     } else {
         // Apply active braking
-        analogWrite(in1Pin, HIGH);   // Brake
-        digitalWrite(in2Pin, HIGH);
+        analogWrite(in1Pin, 255);   // Brake
+        analogWrite(in2Pin, 255);
     }
 
 }
