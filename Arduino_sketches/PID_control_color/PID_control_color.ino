@@ -78,7 +78,19 @@ void loop() {
     // Check if at least one vector (line) is detected
     if (pixy.ccc.getBlocks() > 0) {
       for (int i = 0; i < pixy.ccc.numBlocks; i++) {
-        if (pixy.ccc.blocks[i].m_signature == 1) {
+        if (pixy.ccc.blocks[i].m_signature == 2) {
+          pixy.ccc.blocks[i].print();
+          int x_range = 175 - pixy.ccc.blocks[i].m_x;
+          int y_range = 50 - pixy.ccc.blocks[i].m_y;
+          if (abs(x_range) < 15 && abs(y_range) < 20){
+            go = false;
+            setMotorSpeeds(0, 0);
+            Serial.println("Bullseye Detected in range");
+          } else {
+            Serial.println("No bullseye in stopping range");
+          }
+        }
+        else if (pixy.ccc.blocks[i].m_signature == 1) {
           // Use the x-position of the vector's tail (closest to robot)
           int x = pixy.ccc.blocks[0].m_x;
 
@@ -106,21 +118,10 @@ void loop() {
           int right_speed = constrain(base_speed - output, -150, 150);
 
           // Apply speeds to motors
+          Serial.println("red line seen");
           setMotorSpeeds(left_speed, right_speed);
-
-        } else if (pixy.ccc.blocks[i].m_signature == 2) {
-          // pixy.ccc.blocks[i].print();
-          // int x_range = 165 - pixy.ccc.blocks[i].m_x;
-          // int y_range = pixy.ccc.blocks[i].m_y;
-          // if (abs(x_range) < 50 && y_range > 45){
-            myServo.writeMicroseconds(maxPulse);
-            // brake();
-            // go = false;
-            Serial.println("Bullseye Detected in range");
-          // } else {
-          //   Serial.println("No bullseye in stopping range");
-          // }
-        }
+          // setMotorSpeeds(0, 0);
+        } 
       }
     } else {
       // No line detected; stop the robot
@@ -144,8 +145,8 @@ void setMotorSpeeds(int left_speed, int right_speed) {
     analogWrite(u2_IN1, -left_speed); // Convert negative speed to positive PWM
     analogWrite(u2_IN2, LOW);
   } else {
-    analogWrite(u2_IN1, HIGH);
-    analogWrite(u2_IN2, HIGH);
+    analogWrite(u2_IN1, 255);
+    analogWrite(u2_IN2, 255);
   }
 
   // Control right motor
@@ -156,8 +157,8 @@ void setMotorSpeeds(int left_speed, int right_speed) {
     analogWrite(u3_IN1, LOW);
     analogWrite(u3_IN2, -right_speed); // Convert negative speed to positive PWM
   } else {
-    analogWrite(u3_IN1, HIGH);
-    analogWrite(u3_IN2, HIGH); 
+    analogWrite(u3_IN1, 255);
+    analogWrite(u3_IN2, 255); 
   }
 }
 
