@@ -68,7 +68,6 @@ void loop() {
       Serial.println("Line lost - stopping");
   }
 
-  Serial.print(">");
   // Plotter-specific formatted line (starts with '>', uses var:value pairs)
   Serial.print(">");
   Serial.print("Error: ");
@@ -92,7 +91,7 @@ void loop() {
   Serial.print("left speed (m/s):");
   Serial.print(leftEncoder.computeSpeed());
   Serial.println();  // Auto appends \r\n
-  delay(50);
+  delay(100);
 }
 
 

@@ -1,9 +1,12 @@
 #include "Helpers.h"
 #include "Config.h"
 
-Helpers::Helpers() {}
+Helpers::Helpers() {
+    buttonState;
+    go = false;
+}
 
-void Helpers::buttonCheck()
+bool Helpers::buttonCheck()
 {
     buttonState = digitalRead(START_SIG);
     if (buttonState) {
@@ -12,4 +15,5 @@ void Helpers::buttonCheck()
         }
         go = !go;
     }
+    return go;
 }

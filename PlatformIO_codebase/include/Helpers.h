@@ -4,10 +4,9 @@
 class Helpers {
     private:
         int buttonState;
-        bool go = false; 
 
     public:
         Helpers();
-
-        void buttonCheck();
+        bool go; 
+        bool buttonCheck();
 };
