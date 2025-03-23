@@ -5,6 +5,7 @@
 #include <ServoGripper.h>
 #include <EncoderReader.h>
 #include <PixyLineTracker.h>
+#include <Filter.h>
 
 volatile long encoder1Count = 0;
 volatile long encoder2Count = 0;
@@ -20,6 +21,8 @@ ServoGripper gripper(SERVO, minPulse, maxPulse);
 
 // signature for red line is 1
 PixyLineTracker lineTracker(1);
+
+Filter errorFilter(0.2);
 
 void calibrateMotors();  // Function prototype for calibrateMotors
 
@@ -39,9 +42,11 @@ void loop() {
 
   int baseSpeed = 80;
   int error = lineTracker.readLinePosition();  // -160 (far left) to +160 (far right)
+  int filteredError = errorFilter.computeSMA(error);  // Using your Filter class
+
   // Basic P-control
   float Kp = 0.05;
-  int correction = Kp * error;
+  int correction = Kp * filteredError;
 
   leftMotor.setSpeed(baseSpeed - correction);
   rightMotor.setSpeed((baseSpeed + correction) * rightMotorScale);
