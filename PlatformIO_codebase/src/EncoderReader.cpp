@@ -20,9 +20,9 @@ float EncoderReader::computeSpeed() {
 
     if (deltaTime > 0) {
         // Speed = (delta revolutions) * circumference / delta time
-        float revolutions = (float)deltaTicks / 478.0;  // 478 counts per wheel revolution
-        float distance = revolutions * 0.0628;          // 0.0628 m per wheel rev
-        lastSpeed = distance / deltaTime;               // Speed in m/s
+        float revolutions = (float)deltaTicks / COUNTS_PER_WHEEL_REV;
+        float distance = revolutions * WHEEL_CIRCUMFERENCE; // meters
+        lastSpeed = distance / deltaTime;    // Speed in m/s
     }
 
     lastPosition = currentPosition;
