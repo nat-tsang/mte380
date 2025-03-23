@@ -105,7 +105,6 @@ void loop() {
                   updateMotorSpeeds(left_target_speed, right_target_speed);
               } 
               else if (pixy.ccc.blocks[i].m_signature == 2) {
-                  // 
                   if (pixy.ccc.blocks[i].m_width > 30 && pixy.ccc.blocks[i].m_height > 64) {
                       setMotorSpeeds(0, 0);
                       go = false;
