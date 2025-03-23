@@ -35,3 +35,12 @@ const float WHEEL_BASE = 0.08; // Distance between wheels in meters
 const float WHEEL_DIAMETER = 0.021; // Wheel diameter in meters
 const float COUNTS_PER_WHEEL_REV = 120.0;  // Real-world counts per wheel rev
 const float WHEEL_CIRCUMFERENCE = PI * WHEEL_DIAMETER; // meters
+const float LEGO_KPx = 0.5;
+const float LEGO_KPy = 0.3;
+
+// Pixy CCC params
+const float X_CENTER = 315/2;
+const float Y_CENTER = 207/2;
+const float LEGO_SIG = 4;
+const float BULLSEYE_SIG = 2;
+const float REDLINE_SIG = 1;
