@@ -12,7 +12,7 @@ Filter::Filter(float smoothingFactor){
     }
 }
 
-int Filter::computeSMA(int newValue)
+int Filter::computeSMA(int newValue)    // Simple Moving Average
 {
     xTotal -= xBuffer[xIndex];
     xBuffer[xIndex] = newValue;
@@ -21,7 +21,7 @@ int Filter::computeSMA(int newValue)
     return xTotal / 5;
 }
 
-int Filter::computeEMA(int newX)
+int Filter::computeEMA(int newX)    // Exponential Moving Average
 {
     return sF * newX + (1-sF) * filteredX;
 }
