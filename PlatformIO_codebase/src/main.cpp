@@ -6,6 +6,7 @@
 #include <EncoderReader.h>
 #include <PixyLineTracker.h>
 #include <Filter.h>
+#include <PIDController.h>
 
 volatile long encoder1Count = 0;
 volatile long encoder2Count = 0;
@@ -19,8 +20,10 @@ float rightMotorScale = 1.0;  // Default = no scaling
 Fan fan(FAN);
 ServoGripper gripper(SERVO, minPulse, maxPulse);
 
-// signature for red line is 1
-PixyLineTracker lineTracker(1);
+// Instantiate PID with gains from Config
+PIDController linePID(LINE_KP, LINE_KI, LINE_KD);
+
+PixyLineTracker lineTracker(1); // signature for red line is 1
 
 Filter errorFilter(0.2);
 
@@ -37,9 +40,6 @@ void setup() {
 }
 
 void loop() {
-  // Basic P-control
-  float Kp = 0.05;
-  int baseSpeed = 65;
 
   // Close gripper
   gripper.close();
@@ -47,27 +47,27 @@ void loop() {
   int error = lineTracker.readLinePosition();  // -160 (far left) to +160 (far right)
   int filteredError = errorFilter.computeSMA(error);  // Using your Filter class
 
-  bool lineFound = lineTracker.isLineDetected();
-  if (lineFound) {
-    // Line found - drive with correction
-    int correction = Kp * filteredError;
-    // TODO: set boundaries of pwm to min 63
-    leftMotor.setSpeed(baseSpeed + correction);
-    rightMotor.setSpeed((baseSpeed - correction) * rightMotorScale);
-    // rightMotor.setSpeed(baseSpeed - correction);
-
-    Serial.print("Base: "); Serial.print(baseSpeed);
-    Serial.print(" Correction: "); Serial.print(correction);
-    Serial.print(" L: "); Serial.print(baseSpeed - correction);
-    Serial.print(" R: "); Serial.print((baseSpeed + correction) * rightMotorScale);
-    Serial.print(" R no scaling: "); Serial.println(baseSpeed + correction);
-  } else {
-      // Line lost - stop motors
-      leftMotor.stop();
-      rightMotor.stop();
-      Serial.println("Line lost - stopping");
+  if (!lineTracker.isLineDetected()) {
+    leftMotor.stop();
+    rightMotor.stop();
+    linePID.reset();  // Optional: Reset PID when line is lost
+    Serial.println("Line lost - stopping");
+    return;
   }
 
+  float correction = linePID.compute(filteredError);
+
+  leftMotor.setSpeed(constrain(CALIBRATION_PWM + correction, 63, 255)); // 63 is the minimum PWM value
+  rightMotor.setSpeed(constrain((CALIBRATION_PWM - correction) * rightMotorScale, 63, 255));
+  // rightMotor.setSpeed(CALIBRATION_PWM - correction);
+
+  Serial.print("Base: "); Serial.print(CALIBRATION_PWM);
+  Serial.print(" Correction: "); Serial.print(correction);
+  Serial.print(" L: "); Serial.print(CALIBRATION_PWM - correction);
+  Serial.print(" R: "); Serial.print((CALIBRATION_PWM + correction) * rightMotorScale);
+  Serial.print(" R no scaling: "); Serial.println(CALIBRATION_PWM + correction);
+  
+  Serial.print(">");
   // Plotter-specific formatted line (starts with '>', uses var:value pairs)
   Serial.print(">");
   Serial.print("Error: ");
