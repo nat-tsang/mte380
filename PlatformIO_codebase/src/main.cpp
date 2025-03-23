@@ -30,7 +30,7 @@ Filter errorFilter(0.2);
 void calibrateMotors();  // Function prototype for calibrateMotors
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
   leftEncoder.reset();
   rightEncoder.reset();
   fan.turnOff(); // Turn fan off at startup
@@ -67,29 +67,28 @@ void loop() {
   Serial.print(" R: "); Serial.print((CALIBRATION_PWM + correction) * rightMotorScale);
   Serial.print(" R no scaling: "); Serial.println(CALIBRATION_PWM + correction);
   
-  Serial.print(">");
   // Plotter-specific formatted line (starts with '>', uses var:value pairs)
   Serial.print(">");
   Serial.print("Error: ");
-  Serial.print(error);
-  Serial.print(",");
-  Serial.print("right pwm:");
-  Serial.print(rightMotor.getSpeed());
-  Serial.print(",");
-  Serial.print("left pwm:");
-  Serial.print(leftMotor.getSpeed());
-  Serial.print(",");
-  Serial.print("right encoder:");
-  Serial.print(rightEncoder.getTicks());
-  Serial.print(",");
-  Serial.print("left encoder:");
-  Serial.print(leftEncoder.getTicks());
-  Serial.print(",");
-  Serial.print("right speed (m/s):");
-  Serial.print(rightEncoder.computeSpeed());
-  Serial.print(",");
-  Serial.print("left speed (m/s):");
-  Serial.print(leftEncoder.computeSpeed());
+  Serial.print(filteredError);
+  // Serial.print(",");
+  // Serial.print("right pwm:");
+  // Serial.print(rightMotor.getSpeed());
+  // Serial.print(",");
+  // Serial.print("left pwm:");
+  // Serial.print(leftMotor.getSpeed());
+  // Serial.print(",");
+  // Serial.print("right encoder:");
+  // Serial.print(rightEncoder.getTicks());
+  // Serial.print(",");
+  // Serial.print("left encoder:");
+  // Serial.print(leftEncoder.getTicks());
+  // Serial.print(",");
+  // Serial.print("right speed (m/s):");
+  // Serial.print(rightEncoder.computeSpeed());
+  // Serial.print(",");
+  // Serial.print("left speed (m/s):");
+  // Serial.print(leftEncoder.computeSpeed());
   Serial.println();  // Auto appends \r\n
   delay(100);
 }
@@ -133,4 +132,13 @@ void calibrateMotors() {
   leftMotor.stop();
   rightMotor.stop();
   delay(10000);
+}
+
+void legoManAlign() {
+  if (lineTracker.isBullseye()){
+    int x = lineTracker.getPixyX(4); // Lego man signature is 4
+    if (x > 0) {
+      // position lego man in center
+    }
+  }
 }
