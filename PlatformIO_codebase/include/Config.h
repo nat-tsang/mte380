@@ -22,5 +22,5 @@ const int maxPulse = 2000;  // closed
 const int FAN = 20;
 
 // Calibration settings
-const int CALIBRATION_PWM = 80;  // Tune based on your motor response
+const int CALIBRATION_PWM = 65;  // Tune based on your motor response
 const int CALIBRATION_TIME = 10000; // ms

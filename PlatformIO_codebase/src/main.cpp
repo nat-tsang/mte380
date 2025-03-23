@@ -34,23 +34,46 @@ void setup() {
 }
 
 void loop() {
+  // Basic P-control
+  float Kp = 0.05;
+  int baseSpeed = 65;
+
   // Close gripper
   gripper.close();
 
-  int baseSpeed = 80;
   int error = lineTracker.readLinePosition();  // -160 (far left) to +160 (far right)
-  // Basic P-control
-  float Kp = 0.05;
-  int correction = Kp * error;
+  bool lineFound = lineTracker.isLineDetected();
+  if (lineFound) {
+    // Line found - drive with correction
+    int correction = Kp * error;
+    // TODO: set boundaries of pwm to min 63
+    leftMotor.setSpeed(baseSpeed + correction);
+    rightMotor.setSpeed((baseSpeed - correction) * rightMotorScale);
+    // rightMotor.setSpeed(baseSpeed - correction);
 
-  leftMotor.setSpeed(baseSpeed - correction);
-  rightMotor.setSpeed((baseSpeed + correction) * rightMotorScale);
+    Serial.print("Base: "); Serial.print(baseSpeed);
+    Serial.print(" Correction: "); Serial.print(correction);
+    Serial.print(" L: "); Serial.print(baseSpeed - correction);
+    Serial.print(" R: "); Serial.print((baseSpeed + correction) * rightMotorScale);
+    Serial.print(" R no scaling: "); Serial.println(baseSpeed + correction);
+  } else {
+      // Line lost - stop motors
+      leftMotor.stop();
+      rightMotor.stop();
+      Serial.println("Line lost - stopping");
+  }
 
   Serial.print(">");
   // Plotter-specific formatted line (starts with '>', uses var:value pairs)
   Serial.print(">");
   Serial.print("Error: ");
-  Serial.println(error);
+  Serial.print(error);
+  Serial.print(",");
+  Serial.print("right pwm:");
+  Serial.print(rightMotor.getSpeed());
+  Serial.print(",");
+  Serial.print("left pwm:");
+  Serial.print(leftMotor.getSpeed());
   Serial.print(",");
   Serial.print("right encoder:");
   Serial.print(rightEncoder.getTicks());
@@ -69,6 +92,7 @@ void loop() {
 
 
 void calibrateMotors() {
+  delay(5000);  // Delay to allow serial monitor to open
   Serial.println("Starting Motor Calibration...");
 
   // Reset encoders
@@ -104,5 +128,5 @@ void calibrateMotors() {
   // Stop motors after calibration
   leftMotor.stop();
   rightMotor.stop();
-  delay(500);
+  delay(10000);
 }

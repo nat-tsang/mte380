@@ -15,10 +15,10 @@ void Motor::setSpeed(int speed) {
     if (actualSpeed > 0) {
         // Forward: PWM on IN1, IN2 LOW
         analogWrite(in1Pin, actualSpeed);
-        digitalWrite(in2Pin, LOW);
+        analogWrite(in2Pin, LOW);
     } else if (actualSpeed < 0) {
         // Reverse: PWM on IN2, IN1 LOW
-        digitalWrite(in1Pin, LOW);
+        analogWrite(in1Pin, LOW);
         analogWrite(in2Pin, -actualSpeed);
     } else {
         // Apply active braking
