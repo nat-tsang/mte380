@@ -12,11 +12,11 @@ private:
     float sF = 0.2; // Smoothing factor (0-1)
     float filteredX = 0;
 public:
-    Filter();
+    Filter(float smoothingFactor);
 
     // Compute the simple moving average
     int computeSMA(int newValue);
 
     // Compute exponential moving average
-    
+    int computeEMA(int newX); 
 };
