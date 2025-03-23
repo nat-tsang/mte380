@@ -7,6 +7,7 @@
 #include <PixyLineTracker.h>
 #include <Filter.h>
 #include <PIDController.h>
+#include <TurnController.h>
 
 volatile long encoder1Count = 0;
 volatile long encoder2Count = 0;
@@ -27,6 +28,8 @@ PixyLineTracker lineTracker(1); // signature for red line is 1
 
 Filter errorFilter(0.2);
 
+TurnController turnController(leftMotor, rightMotor, leftEncoder, rightEncoder, WHEEL_BASE, WHEEL_DIAMETER);
+
 void calibrateMotors();  // Function prototype for calibrateMotors
 
 void setup() {
@@ -35,7 +38,7 @@ void setup() {
   rightEncoder.reset();
   fan.turnOff(); // Turn fan off at startup
   gripper.attach(); // Attach servo at startup
-  calibrateMotors();  // << Run calibration once
+  // calibrateMotors();  // << Run calibration once
   lineTracker.begin();
 }
 
@@ -68,7 +71,7 @@ void loop() {
   Serial.print(" R no scaling: "); Serial.println(CALIBRATION_PWM + correction);
   
   // Plotter-specific formatted line (starts with '>', uses var:value pairs)
-  Serial.print(">");
+  // Serial.print(">");
   Serial.print("Error: ");
   Serial.print(filteredError);
   // Serial.print(",");
@@ -131,7 +134,6 @@ void calibrateMotors() {
   // Stop motors after calibration
   leftMotor.stop();
   rightMotor.stop();
-  delay(10000);
 }
 
 void legoManAlign() {

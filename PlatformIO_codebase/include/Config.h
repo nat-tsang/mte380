@@ -1,4 +1,5 @@
 #pragma once // “Include this file only once when compiling, even if it’s included multiple times elsewhere.”
+#include <Arduino.h>
 
 // Motor pins
 const int u2_IN2 = 8;  // Right motor
@@ -28,4 +29,9 @@ const int CALIBRATION_TIME = 10000; // ms
 // PID Gains for Line Following
 const float LINE_KP = 0.5;     // Proportional gain
 const float LINE_KI = 0.0;     // Integral gain (start with 0, add if necessary)
-const float LINE_KD = 0.08;     // Derivative gain
+const float LINE_KD = 0.08;     // Derivative gainconst
+
+const float WHEEL_BASE = 0.08; // Distance between wheels in meters
+const float WHEEL_DIAMETER = 0.021; // Wheel diameter in meters
+const float COUNTS_PER_WHEEL_REV = 120.0;  // Real-world counts per wheel rev
+const float WHEEL_CIRCUMFERENCE = PI * WHEEL_DIAMETER; // meters
