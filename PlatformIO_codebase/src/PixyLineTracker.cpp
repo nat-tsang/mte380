@@ -31,7 +31,7 @@ int PixyLineTracker::readLinePosition() {
     return lastX - X_CENTER;
 }
 
-std::tuple<uint16_t, uint16_t> PixyLineTracker::getPixyCoord(int blockSig)
+std::tuple<int16_t, int16_t> PixyLineTracker::getPixyCoord(int blockSig)
 {
     pixy.ccc.getBlocks();
     Serial.println(pixy.ccc.numBlocks);
@@ -40,8 +40,8 @@ std::tuple<uint16_t, uint16_t> PixyLineTracker::getPixyCoord(int blockSig)
         for (int i = 0; i < pixy.ccc.numBlocks; i++) {
             if (pixy.ccc.blocks[i].m_signature == blockSig) {
                 Serial.println("block found.");
-                uint16_t x = pixy.ccc.blocks->m_x;
-                uint16_t y = pixy.ccc.blocks->m_y;
+                int16_t x = pixy.ccc.blocks->m_x;
+                int16_t y = pixy.ccc.blocks->m_y;
                 return std::make_tuple(x, y);
             }
         }

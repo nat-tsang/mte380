@@ -24,7 +24,7 @@ private:
 
     // Update and get the x-position of the red line (-160 to 160)
     int readLinePosition();
-    std::tuple<uint16_t, uint16_t> getPixyCoord(int blockSig);
+    std::tuple<int16_t, int16_t> getPixyCoord(int blockSig);
 
     // Check if the red line is detected
     bool isLineDetected() const;

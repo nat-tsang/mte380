@@ -4,6 +4,7 @@
 #include "../src/EncoderReader.cpp"
 #include "../src/TurnController.cpp"
 #include "../src/PixyLineTracker.cpp"
+#include "../src/Helpers.cpp"
 
 // Example: Adjust pins and objects based on your setup
 Motor leftMotor(u2_IN1, u2_IN2, true);
@@ -15,8 +16,12 @@ EncoderReader rightEncoder(ENCODER_IN5, ENCODER_IN6);
 TurnController turnController(leftMotor, rightMotor, leftEncoder, rightEncoder, 0.12, 0.02);
 
 PixyLineTracker lineTracker;
+Helpers button;
+
+bool start;
 
 void legoManAlign(int thresholdX, int thresholdY) {
+  // change this to if bullseye detected when that functionality works.
     if (true){
       auto [x, y] = lineTracker.getPixyCoord(5); // Lego man signature is 4
       Serial.print(x);
@@ -27,10 +32,12 @@ void legoManAlign(int thresholdX, int thresholdY) {
         int x_error = abs(X_CENTER - x);
         int y_error = abs(Y_CENTER - y);
         
-        if (x_error < thresholdX && y_error < thresholdY) {
+        if (x_error < thresholdX && y < thresholdY) {
           Serial.println("Legoman is centered, stopping");
           leftMotor.stop();
           rightMotor.stop();
+          start = false;
+          return;
         } else {
           int driveSpeed = y_error * LEGO_KPy;
           int turnSpeed = x_error * LEGO_KPx;
@@ -51,5 +58,13 @@ void setup() {
 }
 
 void loop() {
-    legoManAlign(30, 30);
+  start = button.buttonCheck();
+
+  if (start){
+    legoManAlign(30, 150);
+  } else {
+    leftMotor.stop();
+    rightMotor.stop();
+  }
+    
 }
