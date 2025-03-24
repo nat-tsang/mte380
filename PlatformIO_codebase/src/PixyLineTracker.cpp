@@ -2,11 +2,12 @@
 #include "Config.h"
 #include <tuple>
 
-PixyLineTracker::PixyLineTracker(uint8_t sig) : signature(sig), lastX(160) {}
+PixyLineTracker::PixyLineTracker(){}
 
-void PixyLineTracker::begin() {
-    pixy.init();
-    bullseyeDetected = true;
+void PixyLineTracker::begin()
+{
+  pixy.init();
+  bullseyeDetected = true;
 }
 
 int PixyLineTracker::readLinePosition() {
@@ -34,8 +35,6 @@ int PixyLineTracker::readLinePosition() {
 std::tuple<int16_t, int16_t> PixyLineTracker::getPixyCoord(int blockSig)
 {
     pixy.ccc.getBlocks();
-    Serial.println(pixy.ccc.numBlocks);
-    Serial.println("hi");
     if (pixy.ccc.numBlocks) {
         for (int i = 0; i < pixy.ccc.numBlocks; i++) {
             if (pixy.ccc.blocks[i].m_signature == blockSig) {

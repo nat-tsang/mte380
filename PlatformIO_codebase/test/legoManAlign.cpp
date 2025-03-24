@@ -16,7 +16,6 @@ EncoderReader rightEncoder(ENCODER_IN5, ENCODER_IN6);
 TurnController turnController(leftMotor, rightMotor, leftEncoder, rightEncoder, 0.12, 0.02);
 
 PixyLineTracker lineTracker;
-Helpers button;
 
 bool start;
 
@@ -58,9 +57,9 @@ void setup() {
 }
 
 void loop() {
-  start = button.buttonCheck();
+  checkButton(leftMotor, rightMotor);
 
-  if (start){
+  if (robotRunning){
     legoManAlign(30, 150);
   } else {
     leftMotor.stop();

@@ -84,8 +84,8 @@ void loop() {
     // === Per-Motor Velocity PID === The PID loop is designed to output the PWM correction needed to reach the target velocity
     // float leftPWM = leftVelocityPID.compute(targetLeftVel - leftSpeed);
     // float rightPWM = rightVelocityPID.compute(targetRightVel - rightSpeed);
-    float leftPIDOutput = leftVelocityPID.compute(targetVelocity - leftSpeed);
-    float rightPIDOutput = rightVelocityPID.compute(targetVelocity - rightSpeed);
+    float leftPIDOutput = leftVelocityPID.compute(targetLeftVel - leftSpeed);
+    float rightPIDOutput = rightVelocityPID.compute(targetRightVel - rightSpeed);
     float leftPWM = leftbasePWM + leftPIDOutput;
     float rightPWM = rightbasePWM + rightPIDOutput;
 
