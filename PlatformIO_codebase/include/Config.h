@@ -32,16 +32,16 @@ const float LINE_KI = 0.0;     // Integral gain (start with 0, add if necessary)
 const float LINE_KD = 0.0008;     // Derivative gain
 
 // PID Gains for Velocity Control
-const float LEFT_VELOCITY_KP = 5; // Proportional gain
+const float LEFT_VELOCITY_KP = 8; // Proportional gain
 const float LEFT_VELOCITY_KI = 0.3; // Integral gain (start with 0, add if necessary)
 const float LEFT_VELOCITY_KD = 0; // Derivative gain
 
-const float RIGHT_VELOCITY_KP = 5; // Proportional gain
+const float RIGHT_VELOCITY_KP = 8; // Proportional gain
 const float RIGHT_VELOCITY_KI = 0.3; // Integral gain (start with 0, add if necessary)
 const float RIGHT_VELOCITY_KD = 0; // Derivative gain
 
-float RIGHT_KF = 40; 
-float LEFT_KF = 45;
+const float RIGHT_KF = 45; 
+const float LEFT_KF = 50;
 
 // Robot Constants
 const float WHEEL_BASE = 0.08; // Distance between wheels in meters
