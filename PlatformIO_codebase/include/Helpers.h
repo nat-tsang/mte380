@@ -1,13 +1,24 @@
 #pragma once
 #include <Arduino.h>
-#include <Config.h>
+#include "Motor.h"
 
-class Helpers {
-    private:
-        int buttonState;
+// Global robot run state
+extern bool robotRunning;
 
-    public:
-        Helpers();
-        bool go; 
-        bool buttonCheck();
-};
+// Initialize button pin
+void initButton(int pin);
+
+// Check button state and toggle robot running state
+void checkButton(Motor& leftMotor, Motor& rightMotor);
+
+
+// class Helpers {
+//     private:
+//         int buttonState;
+//         bool go = false; 
+
+//     public:
+//         Helpers();
+
+//         void buttonCheck();
+// };

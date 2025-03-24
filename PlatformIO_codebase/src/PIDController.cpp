@@ -10,7 +10,10 @@ float PIDController::compute(float error) {
     lastTime = now;
 
     if (dt <= 0) dt = 0.001;  // Prevent divide by zero
-    integral += error * dt;
+    
+    if (!isnan(error) && !isinf(error) && !isnan(dt) && !isinf(dt)) {
+        integral += error * dt;
+    }
     float derivative = (error - previousError) / dt;
     previousError = error;
 

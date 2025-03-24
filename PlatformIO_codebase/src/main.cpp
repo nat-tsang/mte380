@@ -8,6 +8,7 @@
 #include <Filter.h>
 #include <PIDController.h>
 #include <TurnController.h>
+#include <Helpers.h>
 
 volatile long encoder1Count = 0;
 volatile long encoder2Count = 0;
@@ -16,13 +17,14 @@ EncoderReader leftEncoder(ENCODER_IN3, ENCODER_IN4);
 
 Motor rightMotor(u2_IN1, u2_IN2, true);
 Motor leftMotor(u3_IN1, u3_IN2, false);
-float rightMotorScale = 1.0;  // Default = no scaling
 
 Fan fan(FAN);
 ServoGripper gripper(SERVO, minPulse, maxPulse);
 
 // Instantiate PID with gains from Config
 PIDController linePID(LINE_KP, LINE_KI, LINE_KD);
+PIDController leftVelocityPID(LEFT_VELOCITY_KD, LEFT_VELOCITY_KD, LEFT_VELOCITY_KI);
+PIDController rightVelocityPID(RIGHT_VELOCITY_KP, RIGHT_VELOCITY_KD, RIGHT_VELOCITY_KI);
 
 PixyLineTracker lineTracker; // signature for red line is 1
 
@@ -30,110 +32,91 @@ Filter errorFilter(0.2);
 
 TurnController turnController(leftMotor, rightMotor, leftEncoder, rightEncoder, WHEEL_BASE, WHEEL_DIAMETER);
 
-void calibrateMotors();  // Function prototype for calibrateMotors
+float targetVelocity = 1.3;  // m/s forward speed
+float rightbasePWM = RIGHT_KF * targetVelocity;  // Feedforward term
+float leftbasePWM = LEFT_KF * targetVelocity;  // Feedforward term
 
 void setup() {
   Serial.begin(115200);
+  initButton(START_SIG);  // Initialize button pin
   leftEncoder.reset();
   rightEncoder.reset();
+  linePID.reset();
   fan.turnOff(); // Turn fan off at startup
   gripper.attach(); // Attach servo at startup
   // calibrateMotors();  // << Run calibration once
   lineTracker.begin();
+
+  // Close gripper & turn off fan
+  gripper.close();
+  fan.turnOff();
 }
 
 void loop() {
+  checkButton(leftMotor, rightMotor);  // Check button state and toggle robotRunning state
+  if (robotRunning) {
+    int pixyError = lineTracker.readLinePosition();  // +160 (far left drift) to -160 (far right drift)
+    int filteredError = errorFilter.computeSMA(pixyError);  // Using your Filter class
+    Serial.print("filteredError: ");
+    Serial.println(filteredError);
 
-  // Close gripper
-  gripper.close();
+    if (!lineTracker.isLineDetected()) {
+      leftMotor.stop();
+      rightMotor.stop();
+      linePID.reset();  // Optional: Reset PID when line is lost
+      Serial.println("Line lost - stopping");
+      return; // Skip the rest of the loop
+    }
 
-  int error = lineTracker.readLinePosition();  // -160 (far left) to +160 (far right)
-  int filteredError = errorFilter.computeSMA(error);  // Using your Filter class
+    // === Filtered Encoder Speed Measurements ===
+    float leftSpeed = leftEncoder.computeSpeed();   // m/s
+    float rightSpeed = rightEncoder.computeSpeed(); // m/s
 
-  if (!lineTracker.isLineDetected()) {
-    leftMotor.stop();
-    rightMotor.stop();
-    linePID.reset();  // Optional: Reset PID when line is lost
-    Serial.println("Line lost - stopping");
-    return;
-  }
+    // === Line Tracking Error from Pixy ===
+    float steeringCorrection = linePID.compute(filteredError);  // Output is differential m/s, -ve means turn left, +ve means turn right
+    Serial.print("steeringCorrection: ");
+    Serial.println(steeringCorrection); 
+    
+    // === Compute target wheel velocities ===
+    float targetLeftVel = targetVelocity + steeringCorrection; // 0.3 m/s + correction
+    float targetRightVel = targetVelocity - steeringCorrection;
 
-  float correction = linePID.compute(filteredError);
+    // === Per-Motor Velocity PID === The PID loop is designed to output the PWM correction needed to reach the target velocity
+    // float leftPWM = leftVelocityPID.compute(targetLeftVel - leftSpeed);
+    // float rightPWM = rightVelocityPID.compute(targetRightVel - rightSpeed);
+    float leftPIDOutput = leftVelocityPID.compute(targetVelocity - leftSpeed);
+    float rightPIDOutput = rightVelocityPID.compute(targetVelocity - rightSpeed);
+    float leftPWM = leftbasePWM + leftPIDOutput;
+    float rightPWM = rightbasePWM + rightPIDOutput;
 
-  leftMotor.setSpeed(constrain(CALIBRATION_PWM + correction, 63, 255)); // 63 is the minimum PWM value
-  rightMotor.setSpeed(constrain((CALIBRATION_PWM - correction) * rightMotorScale, 63, 255));
-  // rightMotor.setSpeed(CALIBRATION_PWM - correction);
-
-  Serial.print("Base: "); Serial.print(CALIBRATION_PWM);
-  Serial.print(" Correction: "); Serial.print(correction);
-  Serial.print(" L: "); Serial.print(CALIBRATION_PWM - correction);
-  Serial.print(" R: "); Serial.print((CALIBRATION_PWM + correction) * rightMotorScale);
-  Serial.print(" R no scaling: "); Serial.println(CALIBRATION_PWM + correction);
-  
-  // Plotter-specific formatted line (starts with '>', uses var:value pairs)
-  // Serial.print(">");
-  Serial.print("Error: ");
-  Serial.print(filteredError);
-  // Serial.print(",");
-  // Serial.print("right pwm:");
-  // Serial.print(rightMotor.getSpeed());
-  // Serial.print(",");
-  // Serial.print("left pwm:");
-  // Serial.print(leftMotor.getSpeed());
-  // Serial.print(",");
-  // Serial.print("right encoder:");
-  // Serial.print(rightEncoder.getTicks());
-  // Serial.print(",");
-  // Serial.print("left encoder:");
-  // Serial.print(leftEncoder.getTicks());
-  // Serial.print(",");
-  // Serial.print("right speed (m/s):");
-  // Serial.print(rightEncoder.computeSpeed());
-  // Serial.print(",");
-  // Serial.print("left speed (m/s):");
-  // Serial.print(leftEncoder.computeSpeed());
-  Serial.println();  // Auto appends \r\n
-  delay(100);
-}
+    // === Apply Motor Commands ===
+    leftMotor.setSpeed(leftPWM);
+    rightMotor.setSpeed(rightPWM);
 
 
-void calibrateMotors() {
-  delay(5000);  // Delay to allow serial monitor to open
-  Serial.println("Starting Motor Calibration...");
-
-  // Reset encoders
-  leftEncoder.reset();
-  rightEncoder.reset();
-
-  // Run both motors forward
-  leftMotor.setSpeed(CALIBRATION_PWM);
-  rightMotor.setSpeed(CALIBRATION_PWM);
-
-  // Wait for steady state
-  delay(CALIBRATION_TIME);
-
-  // Sample speed after running
-  float leftSpeed = leftEncoder.computeSpeed();   // m/s
-  float rightSpeed = rightEncoder.computeSpeed(); // m/s
-
-  Serial.print("Left Speed (m/s): ");
-  Serial.print(leftSpeed);
-  Serial.print("\tRight Speed (m/s): ");
-  Serial.println(rightSpeed);
-
-  // Safety check to avoid divide by zero
-  if (rightSpeed > 0) {
-      rightMotorScale = leftSpeed / rightSpeed;
-  } else {
-      rightMotorScale = 1.0;
-  }
-
-  Serial.print("Calibration scale factor (right motor): ");
-  Serial.println(rightMotorScale);
-
-  // Stop motors after calibration
-  leftMotor.stop();
-  rightMotor.stop();
+    Serial.print(">");    // Plotter-specific formatted line (starts with '>', uses var:value pairs)
+    // Serial.print("Pixy Error: ");
+    // Serial.print(pixyError);
+    // Serial.print(",");
+    // Serial.print("targetLeftVel:");
+    // Serial.print(targetLeftVel);
+    // Serial.print(",");
+    // Serial.print("targetRightVel:");
+    // Serial.print(targetRightVel);
+    // Serial.print(",");
+    Serial.print("leftpwm:");
+    Serial.print(leftPWM);
+    Serial.print(", rightpwm:");
+    Serial.print(rightPWM);
+    Serial.print(", leftspeedmpers:");
+    Serial.print(leftSpeed);
+    Serial.print(", rightspeedmpers:");
+    Serial.println(rightSpeed);
+    delay(10);  // 100 Hz update rate
+  } 
+  // else {
+  //   Serial.println("Buton pressed, robot is stopped");
+  // }
 }
 
 void legoManAlign(int thresholdX, int thresholdY) {
