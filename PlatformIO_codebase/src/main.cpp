@@ -26,7 +26,7 @@ PIDController linePID(LINE_KP, LINE_KI, LINE_KD);
 PIDController leftVelocityPID(LEFT_VELOCITY_KD, LEFT_VELOCITY_KD, LEFT_VELOCITY_KI);
 PIDController rightVelocityPID(RIGHT_VELOCITY_KP, RIGHT_VELOCITY_KD, RIGHT_VELOCITY_KI);
 
-PixyLineTracker lineTracker(1); // signature for red line is 1
+PixyLineTracker lineTracker; // signature for red line is 1
 
 Filter errorFilter(0.2);
 
@@ -117,4 +117,32 @@ void loop() {
   // else {
   //   Serial.println("Buton pressed, robot is stopped");
   // }
+}
+
+void legoManAlign(int thresholdX, int thresholdY) {
+  Serial.println("aligning legoman");
+  if (lineTracker.isBullseye()){
+      
+    auto [x, y] = lineTracker.getPixyCoord(5); // Lego man signature is 4
+    if (x > 0 && y > 0) {
+      Serial.println("positioning lego man");
+      // position lego man in center
+      int x_error = abs(X_CENTER - x);
+      int y_error = abs(Y_CENTER - y);
+      
+      if (x_error < thresholdX && y_error < thresholdY) {
+        leftMotor.stop();
+        rightMotor.stop();
+      } else {
+        int driveSpeed = y_error * LEGO_KPy;
+        int turnSpeed = x_error * LEGO_KPx;
+        leftMotor.setSpeed(constrain(driveSpeed + turnSpeed, 63, 255));
+        rightMotor.setSpeed(constrain(driveSpeed - turnSpeed, 63, 255));
+      }
+    } else {
+      // Lego man not detected, spin till in view 
+      leftMotor.stop();
+      rightMotor.stop();
+    }
+  }
 }

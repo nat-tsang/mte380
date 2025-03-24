@@ -2,6 +2,7 @@
 #include <Arduino.h>
 #include <Motor.h>
 #include <EncoderReader.h>
+#include <PixyLineTracker.h>
 
 class TurnController {
 private:
@@ -17,4 +18,5 @@ public:
 
     // Perform a turn (positive angle = right turn, negative = left turn)
     void turnDegrees(float degrees, int turnSpeed);
+    // void turnToLegoMan(int turnSpeed, PixyLineTracker& pixyTracker);
 };
