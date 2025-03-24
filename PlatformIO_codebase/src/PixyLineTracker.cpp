@@ -1,6 +1,6 @@
 #include "PixyLineTracker.h"
 
-PixyLineTracker::PixyLineTracker(uint8_t sig) : signature(sig), lastX(0) {}
+PixyLineTracker::PixyLineTracker(uint8_t sig) : signature(sig), lastX(160) {}
 
 void PixyLineTracker::begin() {
     pixy.init();

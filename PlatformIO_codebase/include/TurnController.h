@@ -1,7 +1,7 @@
 #pragma once
 #include <Arduino.h>
-#include "Motor.h"
-#include "EncoderReader.h"
+#include <Motor.h>
+#include <EncoderReader.h>
 
 class TurnController {
 private:

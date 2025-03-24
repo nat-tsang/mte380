@@ -1,7 +1,8 @@
 #pragma once
 #include <Arduino.h>
 #include <Encoder.h>
-#include <Config.h>
+#include "Config.h"
+#include "encoderFilter.h"
 
 class EncoderReader {
 private:
@@ -9,6 +10,8 @@ private:
     long lastPosition;
     unsigned long lastTime;
     float lastSpeed;     // Store last computed speed (m/s)
+    
+    SimpleMovingAverage speedFilter;  // New filtering instance
     
 public:
     EncoderReader(int pin1, int pin2);
