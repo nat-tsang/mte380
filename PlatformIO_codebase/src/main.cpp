@@ -14,8 +14,6 @@
 #include <TurnController.h>
 #include <Helpers.h>
 
-volatile long encoder1Count = 0;
-volatile long encoder2Count = 0;
 EncoderReader rightEncoder(ENCODER_IN5, ENCODER_IN6);
 EncoderReader leftEncoder(ENCODER_IN3, ENCODER_IN4);
 
