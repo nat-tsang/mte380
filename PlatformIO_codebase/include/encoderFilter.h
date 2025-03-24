@@ -1,7 +1,7 @@
 #pragma once
 #include <Arduino.h>
 
-class SimpleMovingAverage {
+class encoderFilter {
 private:
     static const int WINDOW_SIZE = 3;  // Tune this based on performance
     float values[WINDOW_SIZE];
@@ -9,6 +9,6 @@ private:
     bool filled = false;
 
 public:
-    SimpleMovingAverage();
+    encoderFilter();
     float compute(float newValue);
 };

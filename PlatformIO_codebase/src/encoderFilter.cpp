@@ -1,12 +1,12 @@
 #include "encoderFilter.h"
 
-SimpleMovingAverage::SimpleMovingAverage() {
+encoderFilter::encoderFilter() {
     for (int i = 0; i < WINDOW_SIZE; i++) {
         values[i] = 0.0;
     }
 }
 
-float SimpleMovingAverage::compute(float newValue) {
+float encoderFilter::compute(float newValue) {
     values[index] = newValue;
     index = (index + 1) % WINDOW_SIZE;
 

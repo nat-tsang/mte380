@@ -7,7 +7,7 @@ PixyLineTracker::PixyLineTracker(){}
 void PixyLineTracker::begin()
 {
   pixy.init();
-  bullseyeDetected = true;
+  bullseyeDetected = false;
 }
 
 int PixyLineTracker::readLinePosition() {
@@ -38,7 +38,6 @@ std::tuple<int16_t, int16_t> PixyLineTracker::getPixyCoord(int blockSig)
     if (pixy.ccc.numBlocks) {
         for (int i = 0; i < pixy.ccc.numBlocks; i++) {
             if (pixy.ccc.blocks[i].m_signature == blockSig) {
-                Serial.println("block found.");
                 int16_t x = pixy.ccc.blocks->m_x;
                 int16_t y = pixy.ccc.blocks->m_y;
                 return std::make_tuple(x, y);
@@ -60,7 +59,6 @@ bool PixyLineTracker::isBullseye() const
 bool PixyLineTracker::findBullseye(int xCrit, int yCrit, int xLim, int yLim)
 {
     pixy.ccc.getBlocks();
-    Serial.println(pixy.ccc.numBlocks);
     if (pixy.ccc.numBlocks) {
         for (int i = 0; i < pixy.ccc.numBlocks; i++) {
             if (pixy.ccc.blocks[i].m_signature == BULLSEYE_SIG) {

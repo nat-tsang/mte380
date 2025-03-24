@@ -11,7 +11,7 @@ private:
     unsigned long lastTime;
     float lastSpeed;     // Store last computed speed (m/s)
     
-    SimpleMovingAverage speedFilter;  // New filtering instance
+    encoderFilter speedFilter;  // New filtering instance
     
 public:
     EncoderReader(int pin1, int pin2);

@@ -1,3 +1,7 @@
+/**
+ * @brief This main loop runs the main state diagram for Piddy with steering detection
+ */
+
 #include <Arduino.h>
 #include <Config.h>
 #include <Motor.h>
@@ -23,24 +27,61 @@ ServoGripper gripper(SERVO, minPulse, maxPulse);
 
 // Instantiate PID with gains from Config
 PIDController linePID(LINE_KP, LINE_KI, LINE_KD);
-PIDController leftVelocityPID(LEFT_VELOCITY_KD, LEFT_VELOCITY_KD, LEFT_VELOCITY_KI);
-PIDController rightVelocityPID(RIGHT_VELOCITY_KP, RIGHT_VELOCITY_KD, RIGHT_VELOCITY_KI);
 
-PixyLineTracker lineTracker; // signature for red line is 1
+PixyLineTracker lineTracker; // Pixy object for line, bullseye and legoman detection
 
 Filter errorFilter(0.2);
 
 TurnController turnController(leftMotor, rightMotor, leftEncoder, rightEncoder, WHEEL_BASE, WHEEL_DIAMETER);
 
 float targetVelocity = 1.3;  // m/s forward speed
-float rightbasePWM = RIGHT_KF * targetVelocity;  // Feedforward term
-float leftbasePWM = LEFT_KF * targetVelocity;  // Feedforward term
+float rightbasePWM = 75;  // Base PWM value
+float leftbasePWM = 75;  // Base PWM value
+
+enum PiddyState {
+  LINE_FOLLOWING,
+  BULLSEYE_DETECT,
+  LEGOMAN_ALIGN,
+  PICKUP_LEGOMAN,
+  IDLE
+};
+
+PiddyState currentState = IDLE;
+
+bool legoManAlign(int thresholdX, int thresholdY) {
+  auto [x, y] = lineTracker.getPixyCoord(5); // Lego man signature is 4
+  Serial.print(x);
+  Serial.print("\t");
+  Serial.println(y);
+  if (x > 0 && y > 0) {
+    // position lego man in center
+    int x_error = abs(X_CENTER - x);
+    int y_error = abs(Y_CENTER - y);
+    
+    if (x_error < thresholdX && y > thresholdY) {
+      Serial.println("Legoman is centered, stopping");
+      leftMotor.stop();
+      rightMotor.stop();
+      return true;
+    } else {
+      int driveSpeed = y_error * LEGO_KPy;
+      int turnSpeed = x_error * LEGO_KPx;
+      leftMotor.setSpeed(constrain(driveSpeed + turnSpeed, 63, 255));
+      rightMotor.setSpeed(constrain(driveSpeed - turnSpeed, 63, 255));
+    }
+  } else {
+    // Lego man not detected, spin till in view 
+    leftMotor.stop();
+    rightMotor.stop();
+  }
+  return false;
+}
 
 void setup() {
   Serial.begin(115200);
   initButton(START_SIG);  // Initialize button pin
-  leftEncoder.reset();
-  rightEncoder.reset();
+  leftEncoder.reset(); // need these for 180 turn
+  rightEncoder.reset(); // need these for 180 turn
   linePID.reset();
   fan.turnOff(); // Turn fan off at startup
   gripper.attach(); // Attach servo at startup
@@ -54,95 +95,74 @@ void setup() {
 
 void loop() {
   checkButton(leftMotor, rightMotor);  // Check button state and toggle robotRunning state
-  if (robotRunning) {
-    int pixyError = lineTracker.readLinePosition();  // +160 (far left drift) to -160 (far right drift)
-    int filteredError = errorFilter.computeSMA(pixyError);  // Using your Filter class
-    Serial.print("filteredError: ");
-    Serial.println(filteredError);
+  if (robotRunning && currentState == IDLE) {
+    currentState = LINE_FOLLOWING;
+  } else if (!robotRunning && currentState != IDLE) {
+    currentState = IDLE;
+  }
 
-    if (!lineTracker.isLineDetected()) {
-      leftMotor.stop();
-      rightMotor.stop();
-      linePID.reset();  // Optional: Reset PID when line is lost
-      Serial.println("Line lost - stopping");
-      return; // Skip the rest of the loop
-    }
+  switch (currentState) {
+    case IDLE:
+      // do nothing, checkButton should ensure motors are already stopped
+      break; 
 
-    // === Filtered Encoder Speed Measurements ===
-    float leftSpeed = leftEncoder.computeSpeed();   // m/s
-    float rightSpeed = rightEncoder.computeSpeed(); // m/s
+    case LINE_FOLLOWING: {
+      lineTracker.findBullseye(175, 50, 15, 20);
+      if (lineTracker.isBullseye()) {
+        leftMotor.setSpeed(0);
+        rightMotor.setSpeed(0);
+        Serial.println("Bullseye found in stopping range.");
+        currentState = LEGOMAN_ALIGN;
+        break;
+      }
 
-    // === Line Tracking Error from Pixy ===
-    float steeringCorrection = linePID.compute(filteredError);  // Output is differential m/s, -ve means turn left, +ve means turn right
-    Serial.print("steeringCorrection: ");
-    Serial.println(steeringCorrection); 
-    
-    // === Compute target wheel velocities ===
-    float targetLeftVel = targetVelocity + steeringCorrection; // 0.3 m/s + correction
-    float targetRightVel = targetVelocity - steeringCorrection;
-
-    // === Per-Motor Velocity PID === The PID loop is designed to output the PWM correction needed to reach the target velocity
-    // float leftPWM = leftVelocityPID.compute(targetLeftVel - leftSpeed);
-    // float rightPWM = rightVelocityPID.compute(targetRightVel - rightSpeed);
-    float leftPIDOutput = leftVelocityPID.compute(targetLeftVel - leftSpeed);
-    float rightPIDOutput = rightVelocityPID.compute(targetRightVel - rightSpeed);
-    float leftPWM = leftbasePWM + leftPIDOutput;
-    float rightPWM = rightbasePWM + rightPIDOutput;
-
-    // === Apply Motor Commands ===
-    leftMotor.setSpeed(leftPWM);
-    rightMotor.setSpeed(rightPWM);
-
-
-    Serial.print(">");    // Plotter-specific formatted line (starts with '>', uses var:value pairs)
-    // Serial.print("Pixy Error: ");
-    // Serial.print(pixyError);
-    // Serial.print(",");
-    // Serial.print("targetLeftVel:");
-    // Serial.print(targetLeftVel);
-    // Serial.print(",");
-    // Serial.print("targetRightVel:");
-    // Serial.print(targetRightVel);
-    // Serial.print(",");
-    Serial.print("leftpwm:");
-    Serial.print(leftPWM);
-    Serial.print(", rightpwm:");
-    Serial.print(rightPWM);
-    Serial.print(", leftspeedmpers:");
-    Serial.print(leftSpeed);
-    Serial.print(", rightspeedmpers:");
-    Serial.println(rightSpeed);
-    delay(10);  // 100 Hz update rate
-  } 
-  // else {
-  //   Serial.println("Buton pressed, robot is stopped");
-  // }
-}
-
-void legoManAlign(int thresholdX, int thresholdY) {
-  Serial.println("aligning legoman");
-  if (lineTracker.isBullseye()){
-      
-    auto [x, y] = lineTracker.getPixyCoord(5); // Lego man signature is 4
-    if (x > 0 && y > 0) {
-      Serial.println("positioning lego man");
-      // position lego man in center
-      int x_error = abs(X_CENTER - x);
-      int y_error = abs(Y_CENTER - y);
-      
-      if (x_error < thresholdX && y_error < thresholdY) {
+      if (!lineTracker.isLineDetected()) {
         leftMotor.stop();
         rightMotor.stop();
-      } else {
-        int driveSpeed = y_error * LEGO_KPy;
-        int turnSpeed = x_error * LEGO_KPx;
-        leftMotor.setSpeed(constrain(driveSpeed + turnSpeed, 63, 255));
-        rightMotor.setSpeed(constrain(driveSpeed - turnSpeed, 63, 255));
+        linePID.reset();
+        currentState = IDLE;
+        robotRunning = false; // forces a manual reset on button
+        break; 
       }
-    } else {
-      // Lego man not detected, spin till in view 
+      
+      int pixyError = lineTracker.readLinePosition();  // +160 (far left drift) to -160 (far right drift)
+      int filteredError = errorFilter.computeSMA(pixyError);  // Using your Filter class
+      Serial.print("filteredError: ");
+      Serial.println(filteredError);
+
+      float steeringCorrection = linePID.compute(filteredError);  // Output is differential m/s, -ve means turn left, +ve means turn right
+      Serial.print("steeringCorrection: ");
+      Serial.println(steeringCorrection); 
+
+      float leftPWM = constrain(leftbasePWM + steeringCorrection, -150, 150);
+      float rightPWM = constrain(rightbasePWM - steeringCorrection, -150, 150);
+  
+      // === Apply Motor Commands ===
+      leftMotor.setSpeed(leftPWM);
+      rightMotor.setSpeed(rightPWM);
+      break;
+    }
+    case LEGOMAN_ALIGN: {
+      if (legoManAlign(30, 150)) {
+        Serial.println("Legoman centered. ");
+        currentState = PICKUP_LEGOMAN;
+      }
+      break;
+    }
+    case PICKUP_LEGOMAN: {
+      gripper.close();
+      delay(1000); // debouncing, allows gripper to fully close 
+      turnController.turnDegrees(180, 70); // 70 from testing in driveAndTurn.cpp
+      // if the above turn has problems, definitely will need to edit turnController to turn until red line is found again or smth
+      currentState = LINE_FOLLOWING;
+      break;
+    }
+    default:
+      // safety catch 
       leftMotor.stop();
       rightMotor.stop();
-    }
+      currentState = IDLE;
+      break;
   }
+  delay(10); // ~ 100 Hz loop rate
 }

@@ -7,39 +7,39 @@ TurnController::TurnController(Motor& leftM, Motor& rightM, EncoderReader& leftE
     wheelCircumference = PI * WHEEL_DIAMETER;
 }
 
-// void TurnController::turnDegrees(float degrees, int turnSpeed) {
-//     // Reset encoders
-//     leftEncoder.reset();
-//     rightEncoder.reset();
+void TurnController::turnDegrees(float degrees, int turnSpeed) {
+    // Reset encoders
+    leftEncoder.reset();
+    rightEncoder.reset();
 
-//     // Calculate the arc length each wheel needs to travel
-//     float turnCircumference = PI * WHEEL_BASE;
-//     float arcLength = (abs(degrees) / 360.0) * turnCircumference;  // meters
+    // Calculate the arc length each wheel needs to travel
+    float turnCircumference = PI * WHEEL_BASE;
+    float arcLength = (abs(degrees) / 360.0) * turnCircumference;  // meters
 
-//     // Calculate equivalent encoder ticks for this arc length
-//     float metersPerTick = wheelCircumference / COUNTS_PER_WHEEL_REV;
-//     long targetTicks = arcLength / metersPerTick;
+    // Calculate equivalent encoder ticks for this arc length
+    float metersPerTick = wheelCircumference / COUNTS_PER_WHEEL_REV;
+    long targetTicks = arcLength / metersPerTick;
 
-//     // Determine turn direction
-//     int leftSpeed = degrees > 0 ? turnSpeed : -turnSpeed;
-//     int rightSpeed = -leftSpeed;
+    // Determine turn direction
+    int leftSpeed = degrees > 0 ? turnSpeed : -turnSpeed;
+    int rightSpeed = -leftSpeed;
 
-//     // Start turning
-//     leftMotor.setSpeed(leftSpeed);
-//     rightMotor.setSpeed(rightSpeed);
+    // Start turning
+    leftMotor.setSpeed(leftSpeed);
+    rightMotor.setSpeed(rightSpeed);
 
-//     // Monitor encoder ticks until target reached
-//     while (abs(leftEncoder.getTicks()) < targetTicks && abs(rightEncoder.getTicks()) < targetTicks) {
-//         // Optionally print progress
-//         Serial.print("Left ticks: "); Serial.print(abs(leftEncoder.getTicks()));
-//         Serial.print(" | Right ticks: "); Serial.println(abs(rightEncoder.getTicks()));
-//         delay(10);
-//     }
+    // Monitor encoder ticks until target reached
+    while (abs(leftEncoder.getTicks()) < targetTicks && abs(rightEncoder.getTicks()) < targetTicks) {
+        // Optionally print progress
+        Serial.print("Left ticks: "); Serial.print(abs(leftEncoder.getTicks()));
+        Serial.print(" | Right ticks: "); Serial.println(abs(rightEncoder.getTicks()));
+        delay(10);
+    }
 
-//     // Stop motors after turn
-//     leftMotor.stop();
-//     rightMotor.stop();
-// }
+    // Stop motors after turn
+    leftMotor.stop();
+    rightMotor.stop();
+}
 
 // void TurnController::turnToLegoMan(int turnSpeed, PixyLineTracker& pixyTracker)
 // {
