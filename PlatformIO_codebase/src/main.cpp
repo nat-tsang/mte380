@@ -35,8 +35,8 @@ Filter<float, 3> speedFilter;       // For encoder speeds (float)
 TurnController turnController(leftMotor, rightMotor, leftEncoder, rightEncoder, WHEEL_BASE, WHEEL_DIAMETER);
 
 float targetVelocity = 1.3;  // m/s forward speed
-float rightbasePWM = 65;  // Base PWM value
-float leftbasePWM = 66;  // Base PWM value
+float rightbasePWM = 70;  // Base PWM value
+float leftbasePWM = 71;  // Base PWM value
 
 enum PiddyState {
   LINE_FOLLOWING,
@@ -108,16 +108,16 @@ void loop() {
     case LINE_FOLLOWING: {
       // Serial.println("Line following now. ");
       float pixyError = lineTracker.readLinePosition();  // +157.5 (far left drift) to -157.5 (far right drift)
-      float filteredError = pixyErrorFilter.computeEMA(pixyError);  // Using your Filter class
+      // float filteredError = pixyErrorFilter.computeEMA(pixyError);  // Using your Filter class
       
-      // lineTracker.findBullseye(175, 50, 15, 20);
-      // if (lineTracker.isBullseye()) {
-      //   leftMotor.setSpeed(0);
-      //   rightMotor.setSpeed(0);
-      //   Serial.println("Bullseye found in stopping range.");
-      //   currentState = LEGOMAN_ALIGN;
-      //   break;
-      // }
+      lineTracker.findBullseye(175, 50, 30, 20);
+      if (lineTracker.isBullseye()) {
+        leftMotor.setSpeed(0);
+        rightMotor.setSpeed(0);
+        Serial.println("Bullseye found in stopping range.");
+        currentState = LEGOMAN_ALIGN;
+        break;
+      }
 
       if (!lineTracker.isLineDetected()) {
         Serial.println("No line seen");
@@ -129,11 +129,11 @@ void loop() {
         break; 
       }
 
-      // if (abs(pixyError) < 5.0) {
-      //   pixyError = 0;
-      // }
+      if (abs(pixyError) < 10.0) {
+        pixyError = 0;
+      }
 
-      int steeringCorrection = linePID.compute(filteredError);  // Output is differential m/s, -ve means turn left, +ve means turn right
+      int steeringCorrection = linePID.compute(pixyError);  // Output is differential m/s, -ve means turn left, +ve means turn right
 
       int leftPWM = constrain(leftbasePWM + steeringCorrection, 0, 150);
       int rightPWM = constrain(rightbasePWM - steeringCorrection, 0, 150);

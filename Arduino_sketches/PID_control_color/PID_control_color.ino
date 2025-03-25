@@ -28,8 +28,11 @@ double integral = 0;        // For integral term
 unsigned long previous_time = 0;  // For time step calculation
 
 // Motor base speed (adjust based on your robot's desired speed)
-int base_speed = 75;
+int base_speed = 60;
 bool go = false;
+
+float emaFiltered = 0;
+float smoothingFactor = 0.5;
 
 void setup() {
   // Start serial communication for debugging
@@ -162,9 +165,7 @@ void setMotorSpeeds(int left_speed, int right_speed) {
   }
 }
 
-void brake() {
-  setMotorSpeeds(-60, -60);
-  delay(200);
-  setMotorSpeeds(0, 0);
+double computeEMA(double newValue) {
+  emaFiltered = smoothingFactor * newValue + (1 - smoothingFactor) * emaFiltered;
+  return emaFiltered;
 }
-

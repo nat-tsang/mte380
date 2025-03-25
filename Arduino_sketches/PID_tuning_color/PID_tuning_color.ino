@@ -11,7 +11,7 @@ const int START_SIG = 22;
 // PID constants (tune these values based on your robot's behavior)
 double Kp = 0.05;  // Proportional gain    //
 double Ki = 0.0;  // Integral gain (may not be needed for line following)
-double Kd = 0.01;
+double Kd = 0;
 
 // PID variables
 double setpoint = 157.5;       // Center of Pixy's frame (315/2)
@@ -21,17 +21,18 @@ unsigned long previous_time = 0;  // For time step calculation
 
 // Motor base speed (adjust based on your robot's desired speed)
 // int base_speed = 80;
-int base = 75;
+int base = 70;
 bool go = false;
 
 float emaFiltered = 0;
+float smoothingFactor = 0.5;
 
 void setup() {
   // Start serial communication for debugging
   Serial.begin(115200);
-  Serial.println("Serial is starting");
-  Serial.print("Kd: ");
-  Serial.println(Kd);
+  // Serial.println("Serial is starting");
+  // Serial.print("Kd: ");
+  // // Serial.println(Kd);
   pinMode(u2_IN1, OUTPUT);
   pinMode(u2_IN2, OUTPUT);
   pinMode(u3_IN1, OUTPUT);
@@ -59,7 +60,7 @@ void loop() {
   int buttonState = digitalRead(START_SIG);
   if (buttonState) {
     while (digitalRead(START_SIG)){
-      Serial.println("Button still pressed. Take finger off. ");
+      //Serial.println("Button still pressed. Take finger off. ");
     }
     go = !go;
   }
@@ -77,28 +78,28 @@ void loop() {
     if (pixy.ccc.getBlocks() > 0) {
       for (int i = 0; i < pixy.ccc.numBlocks; i++) {
         if (pixy.ccc.blocks[i].m_signature == 1) {
-          // Use the x-position of the vector's tail (closest to robot)
+          // Use the x-position
           int x = pixy.ccc.blocks[0].m_x;
 
           // Calculate error (setpoint - current position)
           double error = setpoint - x;
-          error = emaFiltered(error);
+          double filteredError = computeEMA(error);
 
-          if (abs(error) < 30) { 
-            error = 0; // Filter out wobble/correction for very small errors
+          if (abs(filteredError) < 10) { 
+            filteredError = 0; // Filter out wobble/correction for very small errors
           }
 
           // Update integral term
-          integral += error * dt;
+          integral += filteredError * dt;
 
           // Calculate derivative term
-          double derivative = (error - previous_error) / dt;
+          double derivative = (filteredError - previous_error) / dt;
 
           // Compute PID output
-          double output = Kp * error + Ki * integral + Kd * derivative;
+          double output = Kp * filteredError + Ki * integral + Kd * derivative;
 
           // Store current error for next iteration
-          previous_error = error;
+          previous_error = filteredError;
           int leftSpeed, rightSpeed;
 
           // Determine wheel speeds based on PID output
@@ -123,12 +124,11 @@ void loop() {
           setMotorSpeeds(left_speed, right_speed);
 
           // Debug output
-          Serial.print("x: ");
           Serial.print(x);
-          Serial.print(" error: ");
+          Serial.print("\t");
           Serial.print(error);
-          Serial.print("PID output: ");
-          Serial.print(output);
+          Serial.print("\t");
+          Serial.println(filteredError);
           // Serial.print(" left_speed: ");
           // Serial.print(left_speed);
           // Serial.print(" right_speed: ");
@@ -138,7 +138,7 @@ void loop() {
     } else {
       // No line detected; stop the robot
       setMotorSpeeds(0, 0);
-      Serial.println("No line detected");
+      // Serial.println("No line detected");
     }
   } else {setMotorSpeeds(0, 0);}
 }
@@ -153,8 +153,8 @@ void setMotorSpeeds(int left_speed, int right_speed) {
     analogWrite(u3_IN1, LOW); // Convert negative speed to positive PWM
     analogWrite(u3_IN2, -left_speed);
   } else {
-    analogWrite(u3_IN1, HIGH);
-    analogWrite(u3_IN2, HIGH);
+    analogWrite(u3_IN1, 255);
+    analogWrite(u3_IN2, 255);
   }
   // Control right motor
   if (right_speed > 0) {
@@ -164,12 +164,12 @@ void setMotorSpeeds(int left_speed, int right_speed) {
     analogWrite(u2_IN1, -right_speed);
     analogWrite(u2_IN2, LOW); // Convert negative speed to positive PWM
   } else {
-    analogWrite(u2_IN1, HIGH);
-    analogWrite(u2_IN2, HIGH); 
+    analogWrite(u2_IN1, 255);
+    analogWrite(u2_IN2, 255); 
   }
 }
 
-float computeEMA(T newValue) {
+double computeEMA(double newValue) {
   emaFiltered = smoothingFactor * newValue + (1 - smoothingFactor) * emaFiltered;
   return emaFiltered;
 }

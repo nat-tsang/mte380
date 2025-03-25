@@ -65,9 +65,9 @@ bool PixyLineTracker::findBullseye(int xCrit, int yCrit, int xLim, int yLim) {
     if (pixy.ccc.numBlocks) {
         for (int i = 0; i < pixy.ccc.numBlocks; i++) {
             if (pixy.ccc.blocks[i].m_signature == BULLSEYE_SIG) {
-                // int x_range = abs(xCrit - pixy.ccc.blocks[i].m_x);
+                int x_range = abs(xCrit - pixy.ccc.blocks[i].m_x);
                 // int y_range = abs(yCrit - pixy.ccc.blocks[i].m_y);
-                if (pixy.ccc.blocks[i].m_y > yCrit) {
+                if (pixy.ccc.blocks[i].m_y > yCrit && x_range < xLim) {
                     bullseyeDetected = true;
                 }
             }
