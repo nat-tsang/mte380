@@ -54,17 +54,16 @@ void legoManAlignHelper(int thresholdX, int thresholdY) {
       Serial.print("\t");
       Serial.println(y);
       if (x > 0 && y > 0) {
-        // position lego man in center
-        int x_error = abs(X_CENTER - x);
-        int y_error = abs(Y_CENTER - y);
+        int x_error = X_CENTER - x;  // positive if legoman is to the left, negative if legoman is to the right
+        int y_error = 140 - y; // 140 is the y value where the lego man should be located 
         
-        if (x_error < thresholdX && y > thresholdY) {
+        if (abs(x_error) < thresholdX && y > thresholdY) {
           Serial.println("Legoman is centered, stopping");
           leftMotor.stop();
           rightMotor.stop();
           legoManAligned = true;
           return;
-        } else {
+        } else {  // if legoman is not centered
           int driveSpeed = y_error * LEGO_KPy;
           int turnSpeed = x_error * LEGO_KPx;
           leftMotor.setSpeed(constrain(driveSpeed + turnSpeed, 63, 255));

@@ -54,20 +54,19 @@ bool legoManAlign(int thresholdX, int thresholdY) {
   Serial.print("\t");
   Serial.println(y);
   if (x > 0 && y > 0) {
-    // position lego man in center
-    int x_error = abs(X_CENTER - x);
-    int y_error = abs(Y_CENTER - y);
+    int x_error = X_CENTER - x;
+    // int y_error = thresholdY - y;  // If lego man is further, y is smaller. Therefore, y_error is larger.
     
-    if (x_error < thresholdX && y > thresholdY) {
+    if (abs(x_error) < thresholdX && y > thresholdY) {  // TODO: What if lego man in close enough in y but not centered
       Serial.println("Legoman is centered, stopping");
       leftMotor.stop();
       rightMotor.stop();
       return true;
     } else {
-      int driveSpeed = y_error * LEGO_KPy;
+      // int driveSpeed = y_error * LEGO_KPy;
       int turnSpeed = x_error * LEGO_KPx;
-      leftMotor.setSpeed(constrain(driveSpeed + turnSpeed, 63, 255));
-      rightMotor.setSpeed(constrain(driveSpeed - turnSpeed, 63, 255));
+      leftMotor.setSpeed(constrain(60 + turnSpeed, 63, 255));
+      rightMotor.setSpeed(constrain(60 - turnSpeed, 63, 255));
     }
   } else {
     // Lego man not detected, spin till in view 
@@ -156,7 +155,7 @@ void loop() {
     }
 
     case LEGOMAN_ALIGN: {
-      if (legoManAlign(30, 150)) {
+      if (legoManAlign(30, 140)) {
         Serial.println("Legoman centered. ");
         currentState = PICKUP_LEGOMAN;
       } else {
