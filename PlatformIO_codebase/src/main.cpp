@@ -94,6 +94,8 @@ void loop() {
   if (robotRunning && currentState == IDLE) {
     currentState = LINE_FOLLOWING;
   } else if (!robotRunning && currentState != IDLE) {
+    linePID.reset();
+    pixyErrorFilter.reset();
     currentState = IDLE;
   }
 
@@ -106,22 +108,23 @@ void loop() {
     case LINE_FOLLOWING: {
       // Serial.println("Line following now. ");
       float pixyError = lineTracker.readLinePosition();  // +157.5 (far left drift) to -157.5 (far right drift)
-      int filteredError = pixyErrorFilter.computeSMA(pixyError);  // Using your Filter class
+      float filteredError = pixyErrorFilter.computeEMA(pixyError);  // Using your Filter class
       
-      lineTracker.findBullseye(175, 50, 15, 20);
-      if (lineTracker.isBullseye()) {
-        leftMotor.setSpeed(0);
-        rightMotor.setSpeed(0);
-        Serial.println("Bullseye found in stopping range.");
-        currentState = LEGOMAN_ALIGN;
-        break;
-      }
+      // lineTracker.findBullseye(175, 50, 15, 20);
+      // if (lineTracker.isBullseye()) {
+      //   leftMotor.setSpeed(0);
+      //   rightMotor.setSpeed(0);
+      //   Serial.println("Bullseye found in stopping range.");
+      //   currentState = LEGOMAN_ALIGN;
+      //   break;
+      // }
 
       if (!lineTracker.isLineDetected()) {
         Serial.println("No line seen");
         leftMotor.stop();
         rightMotor.stop();
         linePID.reset();
+        pixyErrorFilter.reset();
         currentState = IDLE;
         break; 
       }
@@ -139,15 +142,15 @@ void loop() {
       leftMotor.setSpeed(leftPWM);
       rightMotor.setSpeed(rightPWM);
 
-      Serial.print(">");
-      Serial.print("steeringCorrection: ");
-      Serial.print(steeringCorrection); 
-      Serial.print(", filteredError: ");
-      Serial.print(pixyError);
-      Serial.print(", LeftPWM: ");
-      Serial.print(leftPWM); 
-      Serial.print(", RightPWM: ");
-      Serial.println(rightPWM); 
+      // Serial.print(">");
+      // Serial.print("steeringCorrection: ");
+      // Serial.print(steeringCorrection); 
+      // Serial.print(", filteredError: ");
+      // Serial.print(pixyError);
+      // Serial.print(", LeftPWM: ");
+      // Serial.print(leftPWM); 
+      // Serial.print(", RightPWM: ");
+      // Serial.println(rightPWM); 
   
       break;
     }
