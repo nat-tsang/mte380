@@ -33,7 +33,7 @@ void TurnController::turnDegrees(float degrees, int turnSpeed) {
         // Optionally print progress
         Serial.print("Left ticks: "); Serial.print(abs(leftEncoder.getTicks()));
         Serial.print(" | Right ticks: "); Serial.println(abs(rightEncoder.getTicks()));
-        delay(10);
+        // delay(10);
     }
 
     // Stop motors after turn

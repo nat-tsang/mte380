@@ -28,7 +28,7 @@ PIDController linePID(LINE_KP, LINE_KI, LINE_KD);
 
 PixyLineTracker lineTracker; // Pixy object for line, bullseye and legoman detection
 
-Filter<int, 3> pixyErrorFilter;    // For Pixy X-position (int)
+Filter<float, 3> pixyErrorFilter;    // For Pixy X-position (int)
 Filter<float, 3> speedFilter;       // For encoder speeds (float)
 
 
@@ -106,7 +106,7 @@ void loop() {
     case LINE_FOLLOWING: {
       // Serial.println("Line following now. ");
       float pixyError = lineTracker.readLinePosition();  // +157.5 (far left drift) to -157.5 (far right drift)
-      int filteredError = pixyErrorFilter.computeSMA(pixyError);  // Using your Filter class
+      float filteredError = pixyErrorFilter.computeSMA(pixyError);  // Using your Filter class
       
       lineTracker.findBullseye(175, 50, 15, 20);
       if (lineTracker.isBullseye()) {
@@ -140,15 +140,18 @@ void loop() {
       rightMotor.setSpeed(rightPWM);
 
       Serial.print(">");
-      Serial.print("steeringCorrection: ");
-      Serial.print(steeringCorrection); 
-      Serial.print(", filteredError: ");
+      // Serial.print("steeringCorrection: ");
+      // Serial.print(steeringCorrection); 
+      Serial.print("pixyError: ");
       Serial.print(pixyError);
-      Serial.print(", LeftPWM: ");
-      Serial.print(leftPWM); 
-      Serial.print(", RightPWM: ");
-      Serial.println(rightPWM); 
-  
+      Serial.print(", filteredError: ");
+      Serial.print(filteredError);
+      // Serial.print(", LeftPWM: ");
+      // Serial.print(leftPWM); 
+      // Serial.print(", RightPWM: ");
+      // Serial.print(rightPWM);
+      Serial.println();
+      //delay(10); // ~ 100 Hz loop rate
       break;
     }
 
