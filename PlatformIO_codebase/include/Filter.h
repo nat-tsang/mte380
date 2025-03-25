@@ -12,7 +12,7 @@ private:
     float emaFiltered = 0;
 
 public:
-    Filter(float sF = 0.2) : smoothingFactor(sF) {}
+    Filter(float sF = 0.5) : smoothingFactor(sF) {}
 
     // Simple Moving Average (SMA) with running sum
     T computeSMA(T newValue) {
@@ -31,6 +31,14 @@ public:
     float computeEMA(T newValue) {
         emaFiltered = smoothingFactor * newValue + (1 - smoothingFactor) * emaFiltered;
         return emaFiltered;
+    }
+
+    void reset() {
+        for (size_t i = 0; i < WINDOW_SIZE; i++) buffer[i] = 0;
+        filled = false;
+        emaFiltered = 0;
+        runningSum = 0;
+        index = 0;
     }
 };
 
