@@ -109,10 +109,10 @@ void loop() {
       float pixyError = lineTracker.readLinePosition();  // +157.5 (far left drift) to -157.5 (far right drift)
       // float filteredError = pixyErrorFilter.computeEMA(pixyError);  // Using your Filter class
       
-      lineTracker.findBullseye(175, 50, 30, 20);
+      lineTracker.findBullseye(X_CENTER, 50, 50, 20); // 175, 50, 30, 20
       if (lineTracker.isBullseye()) {
-        leftMotor.setSpeed(0);
-        rightMotor.setSpeed(0);
+        leftMotor.stop();
+        rightMotor.stop();
         Serial.println("Bullseye found in stopping range.");
         currentState = LEGOMAN_ALIGN;
         break;
@@ -158,8 +158,6 @@ void loop() {
       if (legoManAlign(30, 140)) {
         Serial.println("Legoman centered. ");
         currentState = PICKUP_LEGOMAN;
-      } else {
-        currentState = LINE_FOLLOWING; // only temporary when no legoman at bullseye
       }
       break;
     }
