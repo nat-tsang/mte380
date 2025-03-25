@@ -25,20 +25,18 @@ ServoGripper gripper(SERVO, minPulse, maxPulse);
 
 // Instantiate PID with gains from Config
 PIDController linePID(LINE_KP, LINE_KI, LINE_KD);
-PIDController leftVelocityPID(LEFT_VELOCITY_KP, LEFT_VELOCITY_KD, LEFT_VELOCITY_KI);
-PIDController rightVelocityPID(RIGHT_VELOCITY_KP, RIGHT_VELOCITY_KD, RIGHT_VELOCITY_KI);
 
 PixyLineTracker lineTracker; // Pixy object for line, bullseye and legoman detection
 
-Filter<int, 5> pixyErrorFilter;    // For Pixy X-position (int)
+Filter<int, 3> pixyErrorFilter;    // For Pixy X-position (int)
 Filter<float, 3> speedFilter;       // For encoder speeds (float)
 
 
 TurnController turnController(leftMotor, rightMotor, leftEncoder, rightEncoder, WHEEL_BASE, WHEEL_DIAMETER);
 
 float targetVelocity = 1.3;  // m/s forward speed
-float rightbasePWM = 70;  // Base PWM value
-float leftbasePWM = 70;  // Base PWM value
+float rightbasePWM = 65;  // Base PWM value
+float leftbasePWM = 66;  // Base PWM value
 
 enum PiddyState {
   LINE_FOLLOWING,
@@ -107,7 +105,7 @@ void loop() {
     case LINE_FOLLOWING: {
       // Serial.println("Line following now. ");
       float pixyError = lineTracker.readLinePosition();  // +157.5 (far left drift) to -157.5 (far right drift)
-      // int filteredError = errorFilter.computeEMA(pixyError);  // Using your Filter class
+      int filteredError = pixyErrorFilter.computeSMA(pixyError);  // Using your Filter class
       
       lineTracker.findBullseye(175, 50, 15, 20);
       if (lineTracker.isBullseye()) {
@@ -129,14 +127,14 @@ void loop() {
         break; 
       }
 
-      if (abs(pixyError) < 5.0) {
-        pixyError = 0;
-      }
+      // if (abs(pixyError) < 5.0) {
+      //   pixyError = 0;
+      // }
 
-      int steeringCorrection = linePID.compute(pixyError);  // Output is differential m/s, -ve means turn left, +ve means turn right
+      int steeringCorrection = linePID.compute(filteredError);  // Output is differential m/s, -ve means turn left, +ve means turn right
 
-      int leftPWM = constrain(leftbasePWM + steeringCorrection, -150, 150);
-      int rightPWM = constrain(rightbasePWM - steeringCorrection, -150, 150);
+      int leftPWM = constrain(leftbasePWM + steeringCorrection, 0, 150);
+      int rightPWM = constrain(rightbasePWM - steeringCorrection, 0, 150);
       
       // === Apply Motor Commands ===
       leftMotor.setSpeed(leftPWM);

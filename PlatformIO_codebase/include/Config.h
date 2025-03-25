@@ -27,9 +27,9 @@ const int CALIBRATION_PWM = 65;  // Tune based on your motor response
 const int CALIBRATION_TIME = 10000; // ms
 
 // PID Gains for Line Following
-const float LINE_KP = 0.5;     // Proportional gain
+const float LINE_KP = 0.6;     // Proportional gain
 const float LINE_KI = 0.0;     // Integral gain (start with 0, add if necessary)
-const float LINE_KD = 0.08;     // Derivative gain
+const float LINE_KD = 0.0;     // Derivative gain
 
 // PID Gains for Velocity Control
 const float LEFT_VELOCITY_KP = 5; // Proportional gain
