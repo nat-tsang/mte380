@@ -27,9 +27,9 @@ const int CALIBRATION_PWM = 65;  // Tune based on your motor response
 const int CALIBRATION_TIME = 10000; // ms
 
 // PID Gains for Line Following
-const float LINE_KP = 0.01;     // Proportional gain
+const float LINE_KP = 0.5;     // Proportional gain
 const float LINE_KI = 0.0;     // Integral gain (start with 0, add if necessary)
-const float LINE_KD = 0.001;     // Derivative gain
+const float LINE_KD = 0.08;     // Derivative gain
 
 // PID Gains for Velocity Control
 const float LEFT_VELOCITY_KP = 5; // Proportional gain
@@ -40,7 +40,7 @@ const float RIGHT_VELOCITY_KP = 5; // Proportional gain
 const float RIGHT_VELOCITY_KI = 0.3; // Integral gain (start with 0, add if necessary)
 const float RIGHT_VELOCITY_KD = 0; // Derivative gain
 
-const float RIGHT_KF = 45; 
+const float RIGHT_KF = 45;  
 const float LEFT_KF = 50;
 
 // Robot Constants
@@ -48,12 +48,13 @@ const float WHEEL_BASE = 0.08; // Distance between wheels in meters
 const float WHEEL_DIAMETER = 0.021; // Wheel diameter in meters
 const float COUNTS_PER_WHEEL_REV = 120.0;  // Real-world counts per wheel rev
 const float WHEEL_CIRCUMFERENCE = PI * WHEEL_DIAMETER; // meters
-const float LEGO_KPx = 0.5;
+const float LEGO_KPx = 0.6;
 const float LEGO_KPy = 0.3;
 
 // Pixy CCC params
-const float X_CENTER = 315/2;
-const float Y_CENTER = 207/2;
+const float X_CENTER = 315.0/2.0;
+const float Y_CENTER = 207.0/2.0;
 const float LEGO_SIG = 4;
+const float GREEN_BOX_SIG = 3;
 const float BULLSEYE_SIG = 2;
 const float REDLINE_SIG = 1;

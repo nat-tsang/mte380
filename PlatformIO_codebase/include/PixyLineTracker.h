@@ -22,8 +22,8 @@ public:
     // Initialize Pixy
     void begin();
 
-    // Update and get the x-position of the red line (-160 to 160)
-    int readLinePosition();
+    // Update and get the x-position of the red line (-157.5 to 157.5)
+    float readLinePosition();
     std::tuple<int16_t, int16_t> getPixyCoord(int blockSig);
 
     // Check if the red line is detected
