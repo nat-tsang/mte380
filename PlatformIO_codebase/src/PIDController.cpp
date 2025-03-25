@@ -5,8 +5,8 @@ PIDController::PIDController(float p, float i, float d)
     : Kp(p), Ki(i), Kd(d), integral(0), previousError(0), lastTime(millis()) {}
 
 float PIDController::compute(float error) {
-    unsigned long now = millis();
-    float dt = (now - lastTime) / 1000.0; // convert ms to seconds
+    unsigned long now = micros();
+    float dt = (now - lastTime) / 1e6; // convert ms to seconds
     lastTime = now;
 
     if (dt <= 0) dt = 0.001;  // Prevent divide by zero

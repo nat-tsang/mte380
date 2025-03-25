@@ -27,9 +27,9 @@ const int CALIBRATION_PWM = 65;  // Tune based on your motor response
 const int CALIBRATION_TIME = 10000; // ms
 
 // PID Gains for Line Following
-const float LINE_KP = 0.005;     // Proportional gain
+const float LINE_KP = 0.5;     // Proportional gain
 const float LINE_KI = 0.0;     // Integral gain (start with 0, add if necessary)
-const float LINE_KD = 0.0008;     // Derivative gain
+const float LINE_KD = 0.08;     // Derivative gain
 
 // PID Gains for Velocity Control
 const float LEFT_VELOCITY_KP = 8; // Proportional gain
@@ -55,5 +55,6 @@ const float LEGO_KPy = 0.3;
 const float X_CENTER = 315/2;
 const float Y_CENTER = 207/2;
 const float LEGO_SIG = 4;
+const float GREEN_BOX_SIG = 3;
 const float BULLSEYE_SIG = 2;
 const float REDLINE_SIG = 1;

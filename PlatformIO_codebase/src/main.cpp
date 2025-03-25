@@ -28,13 +28,13 @@ PIDController linePID(LINE_KP, LINE_KI, LINE_KD);
 
 PixyLineTracker lineTracker; // Pixy object for line, bullseye and legoman detection
 
-Filter errorFilter(0.2);
+Filter errorFilter(0.7);
 
 TurnController turnController(leftMotor, rightMotor, leftEncoder, rightEncoder, WHEEL_BASE, WHEEL_DIAMETER);
 
 float targetVelocity = 1.3;  // m/s forward speed
-float rightbasePWM = 75;  // Base PWM value
-float leftbasePWM = 75;  // Base PWM value
+float rightbasePWM = 65;  // Base PWM value
+float leftbasePWM = 65;  // Base PWM value
 
 enum PiddyState {
   LINE_FOLLOWING,
@@ -47,7 +47,7 @@ enum PiddyState {
 PiddyState currentState = IDLE;
 
 bool legoManAlign(int thresholdX, int thresholdY) {
-  auto [x, y] = lineTracker.getPixyCoord(5); // Lego man signature is 4
+  auto [x, y] = lineTracker.getPixyCoord(LEGO_SIG); // Lego man signature is 4
   Serial.print(x);
   Serial.print("\t");
   Serial.println(y);
@@ -77,18 +77,14 @@ bool legoManAlign(int thresholdX, int thresholdY) {
 
 void setup() {
   Serial.begin(115200);
+  gripper.attach(); // Attach servo at startup
+  gripper.close();   // Close gripper
   initButton(START_SIG);  // Initialize button pin
   leftEncoder.reset(); // need these for 180 turn
   rightEncoder.reset(); // need these for 180 turn
   linePID.reset();
   fan.turnOff(); // Turn fan off at startup
-  gripper.attach(); // Attach servo at startup
-  // calibrateMotors();  // << Run calibration once
   lineTracker.begin();
-
-  // Close gripper & turn off fan
-  gripper.close();
-  fan.turnOff();
 }
 
 void loop() {
@@ -105,6 +101,13 @@ void loop() {
       break; 
 
     case LINE_FOLLOWING: {
+      // Serial.println("Line following now. ");
+      int pixyError = lineTracker.readLinePosition();  // +160 (far left drift) to -160 (far right drift)
+      // int filteredError = errorFilter.computeEMA(pixyError);  // Using your Filter class
+      if (abs(pixyError) < 10) {
+        pixyError = 0;
+      }
+      
       lineTracker.findBullseye(175, 50, 15, 20);
       if (lineTracker.isBullseye()) {
         leftMotor.setSpeed(0);
@@ -115,6 +118,7 @@ void loop() {
       }
 
       if (!lineTracker.isLineDetected()) {
+        Serial.println("No line seen");
         leftMotor.stop();
         rightMotor.stop();
         linePID.reset();
@@ -122,28 +126,34 @@ void loop() {
         robotRunning = false; // forces a manual reset on button
         break; 
       }
-      
-      int pixyError = lineTracker.readLinePosition();  // +160 (far left drift) to -160 (far right drift)
-      int filteredError = errorFilter.computeSMA(pixyError);  // Using your Filter class
-      Serial.print("filteredError: ");
-      Serial.println(filteredError);
 
-      float steeringCorrection = linePID.compute(filteredError);  // Output is differential m/s, -ve means turn left, +ve means turn right
-      Serial.print("steeringCorrection: ");
-      Serial.println(steeringCorrection); 
+      float steeringCorrection = linePID.compute(pixyError);  // Output is differential m/s, -ve means turn left, +ve means turn right
 
       float leftPWM = constrain(leftbasePWM + steeringCorrection, -150, 150);
       float rightPWM = constrain(rightbasePWM - steeringCorrection, -150, 150);
+
+      Serial.print(">");
+      Serial.print("steeringCorrection: ");
+      Serial.print(steeringCorrection); 
+      Serial.print(", filteredError: ");
+      Serial.print(pixyError);
+      Serial.print(", LeftPWM: ");
+      Serial.print(leftPWM); 
+      Serial.print(", RightPWM: ");
+      Serial.println(rightPWM); 
   
       // === Apply Motor Commands ===
       leftMotor.setSpeed(leftPWM);
       rightMotor.setSpeed(rightPWM);
       break;
     }
+
     case LEGOMAN_ALIGN: {
       if (legoManAlign(30, 150)) {
         Serial.println("Legoman centered. ");
         currentState = PICKUP_LEGOMAN;
+      } else {
+        currentState = LINE_FOLLOWING; // only temporary when no legoman at bullseye
       }
       break;
     }
