@@ -28,7 +28,7 @@ PIDController linePID(LINE_KP, LINE_KI, LINE_KD);
 
 PixyLineTracker lineTracker; // Pixy object for line, bullseye and legoman detection
 
-Filter<int, 3> pixyErrorFilter;    // For Pixy X-position (int)
+Filter<float, 3> pixyErrorFilter;    // For Pixy X-position (float)
 Filter<float, 3> speedFilter;       // For encoder speeds (float)
 
 

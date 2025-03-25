@@ -24,6 +24,8 @@ unsigned long previous_time = 0;  // For time step calculation
 int base = 75;
 bool go = false;
 
+float emaFiltered = 0;
+
 void setup() {
   // Start serial communication for debugging
   Serial.begin(115200);
@@ -80,6 +82,7 @@ void loop() {
 
           // Calculate error (setpoint - current position)
           double error = setpoint - x;
+          error = emaFiltered(error);
 
           if (abs(error) < 30) { 
             error = 0; // Filter out wobble/correction for very small errors
@@ -166,3 +169,7 @@ void setMotorSpeeds(int left_speed, int right_speed) {
   }
 }
 
+float computeEMA(T newValue) {
+  emaFiltered = smoothingFactor * newValue + (1 - smoothingFactor) * emaFiltered;
+  return emaFiltered;
+}
