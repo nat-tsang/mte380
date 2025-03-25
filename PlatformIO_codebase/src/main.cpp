@@ -99,7 +99,8 @@ void loop() {
 
   switch (currentState) {
     case IDLE:
-      // do nothing, checkButton should ensure motors are already stopped
+      leftMotor.stop();
+      rightMotor.stop();
       break; 
 
     case LINE_FOLLOWING: {
@@ -122,8 +123,6 @@ void loop() {
         rightMotor.stop();
         linePID.reset();
         currentState = IDLE;
-        robotRunning = false; // forces a manual reset on button 
-        // TODO: Setting robotRunning to false may cause isues when trying to use the button again?
         break; 
       }
 
