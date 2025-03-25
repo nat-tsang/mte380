@@ -54,7 +54,7 @@ const float LEGO_KPy = 0.3;
 // Pixy CCC params
 const float X_CENTER = 315.0/2.0;
 const float Y_CENTER = 207.0/2.0;
-const float LEGO_SIG = 4;
-const float GREEN_BOX_SIG = 3;
-const float BULLSEYE_SIG = 2;
-const float REDLINE_SIG = 1;
+const int LEGO_SIG = 4;
+const int GREEN_BOX_SIG = 3;
+const int BULLSEYE_SIG = 2;
+const int REDLINE_SIG = 1;

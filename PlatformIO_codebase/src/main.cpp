@@ -54,7 +54,7 @@ bool legoManAlign(int thresholdX, int thresholdY) {
   Serial.print("\t");
   Serial.println(y);
   if (x > 0 && y > 0) {
-    int x_error = X_CENTER - x;
+    int x_error = X_CENTER - x; // positive if legoman is to the left, negative if legoman is to the right
     // int y_error = thresholdY - y;  // If lego man is further, y is smaller. Therefore, y_error is larger.
     
     if (abs(x_error) < thresholdX && y > thresholdY) {  // TODO: What if lego man in close enough in y but not centered
@@ -64,9 +64,9 @@ bool legoManAlign(int thresholdX, int thresholdY) {
       return true;
     } else {
       // int driveSpeed = y_error * LEGO_KPy;
-      int turnSpeed = x_error * LEGO_KPx;
-      leftMotor.setSpeed(constrain(60 + turnSpeed, 63, 255));
-      rightMotor.setSpeed(constrain(60 - turnSpeed, 63, 255));
+      int turnSpeed = x_error * LEGO_KPx;    // Positive means turn right, negative means turn left
+      leftMotor.setSpeed(60 - turnSpeed);
+      rightMotor.setSpeed(60 + turnSpeed);  
     }
   } else {
     // Lego man not detected, spin till in view 
@@ -86,6 +86,7 @@ void setup() {
   linePID.reset();
   fan.turnOff(); // Turn fan off at startup
   lineTracker.begin();
+  lineTracker.setLampOFF();
 }
 
 void loop() {
@@ -95,6 +96,7 @@ void loop() {
   } else if (!robotRunning && currentState != IDLE) {
     linePID.reset();
     pixyErrorFilter.reset();
+    lineTracker.setLampOFF();
     currentState = IDLE;
   }
 
@@ -102,6 +104,7 @@ void loop() {
     case IDLE:
       leftMotor.stop();
       rightMotor.stop();
+      lineTracker.setLampOFF();
       break; 
 
     case LINE_FOLLOWING: {
@@ -155,8 +158,10 @@ void loop() {
     }
 
     case LEGOMAN_ALIGN: {
-      if (legoManAlign(30, 140)) {
+      // lineTracker.setLampON();
+      if (legoManAlign(30, 130)) {
         Serial.println("Legoman centered. ");
+        // lineTracker.setLampOFF();
         currentState = PICKUP_LEGOMAN;
       }
       break;
@@ -164,9 +169,12 @@ void loop() {
     case PICKUP_LEGOMAN: {
       gripper.close();
       // delay(1000); // debouncing, allows gripper to fully close 
-      turnController.turnDegrees(180, 70); // 70 from testing in driveAndTurn.cpp
+      // turnController.turnDegrees(180, 70); // 70 from testing in driveAndTurn.cpp
       // if the above turn has problems, definitely will need to edit turnController to turn until red line is found again or smth
-      currentState = LINE_FOLLOWING;
+      // currentState = IDLE;
+      lineTracker.setLampON();
+      leftMotor.stop();
+      rightMotor.stop();
       break;
     }
     default:

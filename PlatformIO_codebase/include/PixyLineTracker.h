@@ -30,4 +30,7 @@ public:
     bool isLineDetected() const;
     bool isBullseye() const;
     bool findBullseye(int xCrit, int yCrit, int xLim, int yLim);
+
+    void setLampON();
+    void setLampOFF();
 };

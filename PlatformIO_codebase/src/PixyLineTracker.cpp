@@ -75,3 +75,13 @@ bool PixyLineTracker::findBullseye(int xCrit, int yCrit, int xLim, int yLim) {
     }
     return bullseyeDetected;
 }
+
+void PixyLineTracker::setLampON()
+{
+    pixy.setLamp(1, 0);
+}
+
+void PixyLineTracker::setLampOFF()
+{
+    pixy.setLamp(0, 0);
+}
