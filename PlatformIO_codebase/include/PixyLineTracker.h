@@ -3,7 +3,7 @@
 #include <Arduino.h>
 #include <tuple>
 
-class PixyLineTracker {
+class PixyLineTracker {     // TODO: Can change class to be PixyColourTracker and pass in the signature
 private:
     Pixy2 pixy;
     int lastX;          // Last known x-position of the red blob (centered is 160)
@@ -15,7 +15,7 @@ private:
     int xLim;
     int yLim;
 
-    public:
+public:
     // Constructor takes the color signature number (1-7) assigned in Pixy
     PixyLineTracker();
 

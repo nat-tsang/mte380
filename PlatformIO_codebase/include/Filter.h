@@ -1,21 +1,56 @@
 #pragma once
 #include <Arduino.h>
-#include <vector>
 
+template <typename T, int WINDOW_SIZE>
 class Filter {
 private:
-    int xBuffer[5];
-    bool xIndex = 0;
-    int xTotal = 0;  // Stores the last set speed
+    T buffer[WINDOW_SIZE] = {0};
+    int index = 0;
+    bool filled = false;
+    T runningSum = 0;
+    float smoothingFactor;
+    float emaFiltered = 0;
 
-    float sF = 0.2; // Smoothing factor (0-1)
-    float filteredX = 0;
 public:
-    Filter(float smoothingFactor);
+    Filter(float sF = 0.2) : smoothingFactor(sF) {}
 
-    // Compute the simple moving average
-    int computeSMA(int newValue);
+    // Simple Moving Average (SMA) with running sum
+    T computeSMA(T newValue) {
+        runningSum -= buffer[index];
+        buffer[index] = newValue;
+        runningSum += newValue;
 
-    // Compute exponential moving average
-    int computeEMA(int newX); 
+        index = (index + 1) % WINDOW_SIZE;
+        if (index == 0) filled = true;
+
+        int count = filled ? WINDOW_SIZE : index;
+        return runningSum / count;
+    }
+
+    // Exponential Moving Average (EMA)
+    float computeEMA(T newValue) {
+        emaFiltered = smoothingFactor * newValue + (1 - smoothingFactor) * emaFiltered;
+        return emaFiltered;
+    }
 };
+
+
+// #pragma once
+// #include <Arduino.h>
+
+// class Filter {
+// private:
+//     int xBuffer[5];
+//     bool xIndex = 0;
+//     int xTotal = 0;  // Stores the last set speed
+//     float sF = 0.2; // Smoothing factor (0-1)
+//     float filteredX = 0;
+// public:
+//     Filter(float smoothingFactor);
+
+//     // Compute the simple moving average
+//     int computeSMA(int newValue);
+
+//     // Compute exponential moving average
+//     int computeEMA(int newX); 
+// };

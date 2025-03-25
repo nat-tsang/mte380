@@ -22,8 +22,8 @@ float EncoderReader::computeSpeed() {
         // Speed = (delta revolutions) * circumference / delta time
         float revolutions = (float)deltaTicks / COUNTS_PER_WHEEL_REV;
         float distance = revolutions * WHEEL_CIRCUMFERENCE; // meters
-        lastSpeed = speedFilter.compute(distance / deltaTime);  // APPLY FILTER HERE
-        // lastSpeed = distance / deltaTime;    // Speed in m/s
+
+        lastSpeed = speedFilter.computeSMA(distance / deltaTime);  // APPLY FILTER HERE, Speed in m/s
     }
 
     lastPosition = currentPosition;

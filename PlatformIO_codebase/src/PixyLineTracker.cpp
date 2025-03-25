@@ -12,7 +12,7 @@ void PixyLineTracker::begin()
 
 int PixyLineTracker::readLinePosition() {
     pixy.ccc.getBlocks();
-    lineDetected = false;
+    lineDetected = false;//CHECK THIS
 
     if (pixy.ccc.numBlocks) {
         // Find the largest block of the red line (signature match)

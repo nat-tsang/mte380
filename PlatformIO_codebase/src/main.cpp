@@ -23,12 +23,14 @@ ServoGripper gripper(SERVO, minPulse, maxPulse);
 
 // Instantiate PID with gains from Config
 PIDController linePID(LINE_KP, LINE_KI, LINE_KD);
-PIDController leftVelocityPID(LEFT_VELOCITY_KD, LEFT_VELOCITY_KD, LEFT_VELOCITY_KI);
+PIDController leftVelocityPID(LEFT_VELOCITY_KP, LEFT_VELOCITY_KD, LEFT_VELOCITY_KI);
 PIDController rightVelocityPID(RIGHT_VELOCITY_KP, RIGHT_VELOCITY_KD, RIGHT_VELOCITY_KI);
 
 PixyLineTracker lineTracker; // signature for red line is 1
 
-Filter errorFilter(0.2);
+Filter<int, 5> pixyErrorFilter;    // For Pixy X-position (int)
+Filter<float, 3> speedFilter;       // For encoder speeds (float)
+
 
 TurnController turnController(leftMotor, rightMotor, leftEncoder, rightEncoder, WHEEL_BASE, WHEEL_DIAMETER);
 
@@ -56,9 +58,7 @@ void loop() {
   checkButton(leftMotor, rightMotor);  // Check button state and toggle robotRunning state
   if (robotRunning) {
     int pixyError = lineTracker.readLinePosition();  // +160 (far left drift) to -160 (far right drift)
-    int filteredError = errorFilter.computeSMA(pixyError);  // Using your Filter class
-    Serial.print("filteredError: ");
-    Serial.println(filteredError);
+    int filteredError = pixyErrorFilter.computeSMA(pixyError);  // Using your Filter class
 
     if (!lineTracker.isLineDetected()) {
       leftMotor.stop();
@@ -74,7 +74,7 @@ void loop() {
 
     // === Line Tracking Error from Pixy ===
     float steeringCorrection = linePID.compute(filteredError);  // Output is differential m/s, -ve means turn left, +ve means turn right
-    Serial.print("steeringCorrection: ");
+    Serial.print(" steeringCorrection: ");
     Serial.println(steeringCorrection); 
     
     // === Compute target wheel velocities ===
@@ -82,8 +82,6 @@ void loop() {
     float targetRightVel = targetVelocity - steeringCorrection;
 
     // === Per-Motor Velocity PID === The PID loop is designed to output the PWM correction needed to reach the target velocity
-    // float leftPWM = leftVelocityPID.compute(targetLeftVel - leftSpeed);
-    // float rightPWM = rightVelocityPID.compute(targetRightVel - rightSpeed);
     float leftPIDOutput = leftVelocityPID.compute(targetLeftVel - leftSpeed);
     float rightPIDOutput = rightVelocityPID.compute(targetRightVel - rightSpeed);
     float leftPWM = leftbasePWM + leftPIDOutput;
@@ -93,18 +91,30 @@ void loop() {
     leftMotor.setSpeed(leftPWM);
     rightMotor.setSpeed(rightPWM);
 
-
     Serial.print(">");    // Plotter-specific formatted line (starts with '>', uses var:value pairs)
-    // Serial.print("Pixy Error: ");
+    // Serial.print("pixyError: ");
     // Serial.print(pixyError);
+    // Serial.print(", filteredError: ");
+    // Serial.print(filteredError);
     // Serial.print(",");
-    // Serial.print("targetLeftVel:");
-    // Serial.print(targetLeftVel);
+    // Serial.print("rightencoder:");
+    // Serial.print(rightEncoder.getTicks());
     // Serial.print(",");
-    // Serial.print("targetRightVel:");
-    // Serial.print(targetRightVel);
+    // Serial.print("leftencoder:");
+    // Serial.print(leftEncoder.getTicks());
     // Serial.print(",");
-    Serial.print("leftpwm:");
+    Serial.print("leftPIDOutput:");
+    Serial.print(leftPIDOutput);
+    Serial.print(",");
+    Serial.print("rightPIDOutput:");
+    Serial.print(rightPIDOutput);
+    Serial.print(",");
+    Serial.print("targetLeftVel:");
+    Serial.print(targetLeftVel);
+    Serial.print(",");
+    Serial.print("targetRightVel:");
+    Serial.print(targetRightVel);
+    Serial.print(", leftpwm:");
     Serial.print(leftPWM);
     Serial.print(", rightpwm:");
     Serial.print(rightPWM);
@@ -112,7 +122,7 @@ void loop() {
     Serial.print(leftSpeed);
     Serial.print(", rightspeedmpers:");
     Serial.println(rightSpeed);
-    delay(10);  // 100 Hz update rate
+    delay(100); 
   } 
   // else {
   //   Serial.println("Buton pressed, robot is stopped");

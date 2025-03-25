@@ -2,7 +2,7 @@
 #include <Arduino.h>
 #include <Encoder.h>
 #include "Config.h"
-#include "encoderFilter.h"
+#include "Filter.h"
 
 class EncoderReader {
 private:
@@ -11,7 +11,8 @@ private:
     unsigned long lastTime;
     float lastSpeed;     // Store last computed speed (m/s)
     
-    SimpleMovingAverage speedFilter;  // New filtering instance
+    // templated Filter instance (adjust window size as needed)
+    Filter<float, 3> speedFilter;  // window size of 3
     
 public:
     EncoderReader(int pin1, int pin2);
