@@ -66,8 +66,8 @@ bool legoManAlign(int thresholdX, int thresholdY) {
     } else {
       int driveSpeed = y_error * LEGO_KPy;
       int turnSpeed = x_error * LEGO_KPx;
-      leftMotor.setSpeed(constrain(driveSpeed + turnSpeed, 63, 255));
-      rightMotor.setSpeed(constrain(driveSpeed - turnSpeed, 63, 255));
+      leftMotor.setSpeed(constrain(driveSpeed + turnSpeed, 65, 150));
+      rightMotor.setSpeed(constrain(driveSpeed - turnSpeed, 65, 150));
     }
   } else {
     // Lego man not detected, spin till in view 
@@ -110,10 +110,10 @@ void loop() {
       float pixyError = lineTracker.readLinePosition();  // +157.5 (far left drift) to -157.5 (far right drift)
       // float filteredError = pixyErrorFilter.computeEMA(pixyError);  // Using your Filter class
       
-      lineTracker.findBullseye(175, 50, 30, 20);
+      lineTracker.findBullseye(X_CENTER, 50, 50, 20); // 175, 50, 30, 20
       if (lineTracker.isBullseye()) {
-        leftMotor.setSpeed(0);
-        rightMotor.setSpeed(0);
+        leftMotor.stop();
+        rightMotor.stop();
         Serial.println("Bullseye found in stopping range.");
         currentState = LEGOMAN_ALIGN;
         break;
@@ -159,8 +159,6 @@ void loop() {
       if (legoManAlign(30, 150)) {
         Serial.println("Legoman centered. ");
         currentState = PICKUP_LEGOMAN;
-      } else {
-        currentState = LINE_FOLLOWING; // only temporary when no legoman at bullseye
       }
       break;
     }
