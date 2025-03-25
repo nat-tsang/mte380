@@ -40,7 +40,7 @@ const float RIGHT_VELOCITY_KP = 8; // Proportional gain
 const float RIGHT_VELOCITY_KI = 0.3; // Integral gain (start with 0, add if necessary)
 const float RIGHT_VELOCITY_KD = 0; // Derivative gain
 
-const float RIGHT_KF = 45; 
+const float RIGHT_KF = 45;  
 const float LEFT_KF = 50;
 
 // Robot Constants
@@ -52,8 +52,8 @@ const float LEGO_KPx = 0.6;
 const float LEGO_KPy = 0.3;
 
 // Pixy CCC params
-const float X_CENTER = 315/2;
-const float Y_CENTER = 207/2;
+const float X_CENTER = 315.0/2.0;
+const float Y_CENTER = 207.0/2.0;
 const float LEGO_SIG = 4;
 const float GREEN_BOX_SIG = 3;
 const float BULLSEYE_SIG = 2;

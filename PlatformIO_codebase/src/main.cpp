@@ -33,8 +33,8 @@ Filter errorFilter(0.7);
 TurnController turnController(leftMotor, rightMotor, leftEncoder, rightEncoder, WHEEL_BASE, WHEEL_DIAMETER);
 
 float targetVelocity = 1.3;  // m/s forward speed
-float rightbasePWM = 65;  // Base PWM value
-float leftbasePWM = 65;  // Base PWM value
+float rightbasePWM = 70;  // Base PWM value
+float leftbasePWM = 70;  // Base PWM value
 
 enum PiddyState {
   LINE_FOLLOWING,
@@ -102,11 +102,8 @@ void loop() {
 
     case LINE_FOLLOWING: {
       // Serial.println("Line following now. ");
-      int pixyError = lineTracker.readLinePosition();  // +160 (far left drift) to -160 (far right drift)
+      float pixyError = lineTracker.readLinePosition();  // +157.5 (far left drift) to -157.5 (far right drift)
       // int filteredError = errorFilter.computeEMA(pixyError);  // Using your Filter class
-      if (abs(pixyError) < 10) {
-        pixyError = 0;
-      }
       
       lineTracker.findBullseye(175, 50, 15, 20);
       if (lineTracker.isBullseye()) {
@@ -123,14 +120,23 @@ void loop() {
         rightMotor.stop();
         linePID.reset();
         currentState = IDLE;
-        robotRunning = false; // forces a manual reset on button
+        robotRunning = false; // forces a manual reset on button 
+        // TODO: Setting robotRunning to false may cause isues when trying to use the button again?
         break; 
       }
 
-      float steeringCorrection = linePID.compute(pixyError);  // Output is differential m/s, -ve means turn left, +ve means turn right
+      if (abs(pixyError) < 5.0) {
+        pixyError = 0;
+      }
 
-      float leftPWM = constrain(leftbasePWM + steeringCorrection, -150, 150);
-      float rightPWM = constrain(rightbasePWM - steeringCorrection, -150, 150);
+      int steeringCorrection = linePID.compute(pixyError);  // Output is differential m/s, -ve means turn left, +ve means turn right
+
+      int leftPWM = constrain(leftbasePWM + steeringCorrection, -150, 150);
+      int rightPWM = constrain(rightbasePWM - steeringCorrection, -150, 150);
+      
+      // === Apply Motor Commands ===
+      leftMotor.setSpeed(leftPWM);
+      rightMotor.setSpeed(rightPWM);
 
       Serial.print(">");
       Serial.print("steeringCorrection: ");
@@ -142,9 +148,6 @@ void loop() {
       Serial.print(", RightPWM: ");
       Serial.println(rightPWM); 
   
-      // === Apply Motor Commands ===
-      leftMotor.setSpeed(leftPWM);
-      rightMotor.setSpeed(rightPWM);
       break;
     }
 
@@ -159,7 +162,7 @@ void loop() {
     }
     case PICKUP_LEGOMAN: {
       gripper.close();
-      delay(1000); // debouncing, allows gripper to fully close 
+      // delay(1000); // debouncing, allows gripper to fully close 
       turnController.turnDegrees(180, 70); // 70 from testing in driveAndTurn.cpp
       // if the above turn has problems, definitely will need to edit turnController to turn until red line is found again or smth
       currentState = LINE_FOLLOWING;
@@ -172,5 +175,5 @@ void loop() {
       currentState = IDLE;
       break;
   }
-  delay(10); // ~ 100 Hz loop rate
+  //delay(10); // ~ 100 Hz loop rate
 }

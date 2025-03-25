@@ -23,7 +23,6 @@ void checkButton(Motor& leftMotor, Motor& rightMotor) {
             rightMotor.stop();
         }
     }
-
     lastButtonState = buttonState;
 }
 
