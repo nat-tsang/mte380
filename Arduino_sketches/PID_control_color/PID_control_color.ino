@@ -28,7 +28,7 @@ double integral = 0;        // For integral term
 unsigned long previous_time = 0;  // For time step calculation
 
 // Motor base speed (adjust based on your robot's desired speed)
-int base_speed = 70;
+int base_speed = 65;
 bool go = false;
 
 float emaFiltered = 0;
@@ -51,7 +51,7 @@ void setup() {
   // Initialize Pixy2 camera
   pixy.init();
   pixy.changeProg("color_connected_components");
-  myServo.writeMicroseconds(maxPulse);
+  myServo.writeMicroseconds(minPulse);
   // Record initial time
   previous_time = millis();
 }
@@ -77,15 +77,15 @@ void loop() {
     // Get colour features  features from Pixy
     pixy.ccc.getBlocks();
 
-    myServo.writeMicroseconds(maxPulse);
+    // myServo.writeMicros econds(maxPulse);
     // Check if at least one vector (line) is detected
     if (pixy.ccc.getBlocks() > 0) {
       for (int i = 0; i < pixy.ccc.numBlocks; i++) {
         if (pixy.ccc.blocks[i].m_signature == 2) {
           pixy.ccc.blocks[i].print();
-          int x_range = 175 - pixy.ccc.blocks[i].m_x;
-          int y_range = 50 - pixy.ccc.blocks[i].m_y;
-          if (abs(x_range) < 15 && abs(y_range) < 20){
+          int x_range = 100 - pixy.ccc.blocks[i].m_x;
+          int y_range = 40 - pixy.ccc.blocks[i].m_y;
+          if (abs(x_range) < 30 && abs(y_range) < 20){
             go = false;
             setMotorSpeeds(0, 0);
             Serial.println("Bullseye Detected in range");
@@ -129,7 +129,7 @@ void loop() {
     } else {
       // No line detected; stop the robot
       setMotorSpeeds(0, 0);
-      
+      go = false;
       Serial.println("No line detected");
     }
   }
