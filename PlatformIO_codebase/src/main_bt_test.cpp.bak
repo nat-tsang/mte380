@@ -1,6 +1,8 @@
-// #include <PID_v1.h>
 #include <Pixy2.h>
 #include <Servo.h>
+
+// Bluetooth Serial
+#define BTSerial Serial1
 
 Servo myServo;
 Pixy2 pixy;
@@ -31,111 +33,22 @@ unsigned long previous_time = 0;  // For time step calculation
 int base_speed = 65;
 bool go = false;
 
-float emaFiltered = 0;
-float smoothingFactor = 0.5;
 
-void setup() {
-  // Start serial communication for debugging
-  Serial.begin(115200);
-  Serial.println("Serial is starting");
-  pinMode(u2_IN1, OUTPUT);
-  pinMode(u2_IN2, OUTPUT);
-  pinMode(u3_IN1, OUTPUT);
-  pinMode(u3_IN2, OUTPUT);
-  pinMode(FAN, OUTPUT);
-  digitalWrite(FAN, LOW); // Keep fan off
-  pinMode(START_SIG, INPUT_PULLDOWN);
-  myServo.attach(SERVO, minPulse, maxPulse);
-
-
-  // Initialize Pixy2 camera
-  pixy.init();
-  pixy.changeProg("color_connected_components");
-  myServo.writeMicroseconds(minPulse);
-  // Record initial time
-  previous_time = millis();
+void debugPrint(String msg) {
+  Serial.print(msg);
+  BTSerial.println(msg);
 }
 
-void loop() {
+void handleBluetoothCommand(String cmd) {
+  cmd.trim(); // Remove whitespace
+  Serial.print("Received Bluetooth: ");
+  Serial.println(cmd);
 
-  // static bool lastButtonState = LOW;        
-  int buttonState = digitalRead(START_SIG);
-  if (buttonState) {
-    while(digitalRead(START_SIG)){
-      Serial.println("Button still pressed. Take finger off.");
-    }
-    go = !go;
-  }
-
-
-  if (go){
-    // Calculate time step (dt) in seconds
-    unsigned long current_time = millis();
-    double dt = (current_time - previous_time) / 1000.0;
-    previous_time = current_time;
-
-    // Get colour features  features from Pixy
-    pixy.ccc.getBlocks();
-
-    // myServo.writeMicros econds(maxPulse);
-    // Check if at least one vector (line) is detected
-    if (pixy.ccc.getBlocks() > 0) {
-      for (int i = 0; i < pixy.ccc.numBlocks; i++) {
-        if (pixy.ccc.blocks[i].m_signature == 2) {
-          pixy.ccc.blocks[i].print();
-          int x_range = 100 - pixy.ccc.blocks[i].m_x;
-          int y_range = 40 - pixy.ccc.blocks[i].m_y;
-          if (abs(x_range) < 30 && abs(y_range) < 20){
-            go = false;
-            setMotorSpeeds(0, 0);
-            Serial.println("Bullseye Detected in range");
-          } else {
-            Serial.println("No bullseye in stopping range");
-          }
-        }
-        else if (pixy.ccc.blocks[i].m_signature == 1) {
-          // Use the x-position of the vector's tail (closest to robot)
-          int x = pixy.ccc.blocks[0].m_x;
-
-          // Calculate error (setpoint - current position)
-          double error = setpoint - x;
-          // working at 5, setting to 10 to match fan testing
-          if (abs(error) < 10) { 
-            error = 0; // Filter out wobble/correction for very small errors
-          }
-
-          // Update integral term
-          integral += error * dt;
-
-          // Calculate derivative term
-          double derivative = (error - previous_error) / dt;
-
-          // Compute PID output
-          double output = Kp * error + Ki * integral + Kd * derivative;
-
-          // Store current error for next iteration
-          previous_error = error;
-
-          // Calculate motor speeds (differential drive)
-          int left_speed = constrain(base_speed + output, -150, 150);
-          int right_speed = constrain(base_speed - output, -150, 150);
-
-          // Apply speeds to motors
-          Serial.println("red line seen");
-          setMotorSpeeds(left_speed, right_speed);
-          // setMotorSpeeds(0, 0);
-        } 
-      }
-    } else {
-      // No line detected; stop the robot
-      setMotorSpeeds(0, 0);
-      go = false;
-      Serial.println("No line detected");
-    }
-  }
-  else {
-    // If off, turn motors off (brake)
-    setMotorSpeeds(0, 0);
+  // Example: change Kp on the fly
+  if (cmd.startsWith("KP:")) {
+    Kp = cmd.substring(3).toFloat();
+    Serial.print("Updated Kp to ");
+    Serial.println(Kp);
   }
 }
 
@@ -165,3 +78,115 @@ void setMotorSpeeds(int left_speed, int right_speed) {
     analogWrite(u3_IN2, 255); 
   }
 }
+
+void setup() {
+  // Start serial communication for debugging
+  Serial.begin(9600);
+  Serial.println("Serial is starting");   // USB Debug
+  
+  BTSerial.begin(9600);    // Bluetooth HC-05
+  BTSerial.print("Some debug");
+  pinMode(u2_IN1, OUTPUT);
+  pinMode(u2_IN2, OUTPUT);
+  pinMode(u3_IN1, OUTPUT);
+  pinMode(u3_IN2, OUTPUT);
+  pinMode(FAN, OUTPUT);
+  digitalWrite(FAN, LOW); // Keep fan off
+  pinMode(START_SIG, INPUT_PULLDOWN);
+  myServo.attach(SERVO, minPulse, maxPulse);
+
+
+  // Initialize Pixy2 camera
+  pixy.init();
+  pixy.changeProg("color_connected_components");
+  myServo.writeMicroseconds(maxPulse);
+  // Record initial time
+  previous_time = millis();
+}
+
+void loop() {
+  // static bool lastButtonState = LOW;        
+  int buttonState = digitalRead(START_SIG);
+  if (buttonState) {
+    while(digitalRead(START_SIG)){
+      debugPrint("Button still pressed. Take finger off.");
+    }
+    go = !go;
+  }
+
+
+  if (go){
+    // Calculate time step (dt) in seconds
+    unsigned long current_time = millis();
+    double dt = (current_time - previous_time) / 1000.0;
+    previous_time = current_time;
+
+    // Get colour features  features from Pixy
+    pixy.ccc.getBlocks();
+
+    myServo.writeMicroseconds(maxPulse);
+    // Check if at least one vector (line) is detected
+    if (pixy.ccc.getBlocks() > 0) {
+      for (int i = 0; i < pixy.ccc.numBlocks; i++) {
+        if (pixy.ccc.blocks[i].m_signature == 2) {
+          int x_range = abs(100 - pixy.ccc.blocks[i].m_x);
+          // int y_range = abs(yCrit - pixy.ccc.blocks[i].m_y);
+          if (pixy.ccc.blocks[i].m_y > 40 && x_range < 30) {
+              go = false;
+              setMotorSpeeds(0,0);
+              myServo.writeMicroseconds(minPulse);
+              debugPrint("bullseye detected in range");
+          }
+        }
+        else if (pixy.ccc.blocks[i].m_signature == 1) {
+          // Use the x-position
+          int x = pixy.ccc.blocks[0].m_x;
+          debugPrint(x);
+
+          // Calculate error (setpoint - current position)
+          double error = setpoint - x;
+          // working at 5, setting to 10 to match fan testing
+          if (abs(error) < 10) { 
+            error = 0; // Filter out wobble/correction for very small errors
+          }
+
+          // Update integral term
+          integral += error * dt;
+
+          // Calculate derivative term
+          double derivative = (error - previous_error) / dt;
+
+          // Compute PID output
+          double output = Kp * error + Ki * integral + Kd * derivative;
+
+          // Store current error for next iteration
+          previous_error = error;
+
+          // Calculate motor speeds (differential drive)
+          int left_speed = constrain(base_speed + output, -150, 150);
+          int right_speed = constrain(base_speed - output, -150, 150);
+
+          // Apply speeds to motors
+          debugPrint("red line seen");
+          setMotorSpeeds(left_speed, right_speed);
+          // setMotorSpeeds(0, 0);
+        } 
+      }
+    } else {
+      // No line detected; stop the robot
+      setMotorSpeeds(0, 0);
+      debugPrint("No line detected");
+    }
+  }
+  else {
+    // If off, turn motors off (brake)
+    setMotorSpeeds(0, 0);
+  }
+  //   // BLUETOOTH HANDLING (Non-blocking)
+  // if (BTSerial.available()) {
+  //   String btCommand = BTSerial.readStringUntil('\n');
+  //   handleBluetoothCommand(btCommand);
+  // }
+}
+
+

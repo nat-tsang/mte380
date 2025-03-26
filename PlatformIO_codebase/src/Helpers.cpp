@@ -26,6 +26,10 @@ void checkButton(Motor& leftMotor, Motor& rightMotor) {
     lastButtonState = buttonState;
 }
 
+// void debugPrint(String msg) {
+//     Serial.print(msg);
+//     BTSerial.print(msg);
+// }
 
 // Helpers::Helpers() {}
 

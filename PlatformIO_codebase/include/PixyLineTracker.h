@@ -22,14 +22,19 @@ public:
     // Initialize Pixy
     void begin();
 
-    // Update and get the x-position of the red line (-157.5 to 157.5)
-    float readLinePosition();
-    std::tuple<int16_t, int16_t> getPixyCoord(int blockSig);
+    // Methods
+    float readLinePosition(const Block* block, int numBlock);
+    std::tuple<int16_t, int16_t> getPixyCoord(int blockSig, const Block* block, int numBlock);
+    bool findBullseye(int xCrit, int yCrit, int xLim, int yLim, const Block* block, int numBlock);
 
-    // Check if the red line is detected
-    bool isLineDetected() const;
-    bool isBullseye() const;
-    bool findBullseye(int xCrit, int yCrit, int xLim, int yLim);
+    // Getters
+    bool getLineDetected() const;
+    bool getBullseye() const;
+
+    // Setters
+    void setLineDetected(bool status);
+    void setBullseye(bool status);
+
 
     void setLampON();
     void setLampOFF();
