@@ -159,7 +159,7 @@ void loop() {
 
     case LEGOMAN_ALIGN: {
       // lineTracker.setLampON();
-      if (legoManAlign(30, 130)) {
+      if (legoManAlign(30, 145)) {
         Serial.println("Legoman centered. ");
         // lineTracker.setLampOFF();
         currentState = PICKUP_LEGOMAN;
