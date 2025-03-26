@@ -34,6 +34,7 @@ PIDController leftVelocityPID(LEFT_VELOCITY_KP, LEFT_VELOCITY_KD, LEFT_VELOCITY_
 PIDController rightVelocityPID(RIGHT_VELOCITY_KP, RIGHT_VELOCITY_KD, RIGHT_VELOCITY_KI);
 
 PixyLineTracker lineTracker; // signature for red line is 1
+Pixy2 pixy;
 
 TurnController turnController(leftMotor, rightMotor, leftEncoder, rightEncoder, WHEEL_BASE, WHEEL_DIAMETER);
 
@@ -44,8 +45,8 @@ void debugPrint(String msg) {
   BTSerial.println(msg);
 }
 
-bool legoManAlign(int thresholdX, int thresholdY) {
-  auto [x, y] = lineTracker.getPixyCoord(6); // orange shayla is 6
+bool legoManAlign(int thresholdX, int thresholdY, const Block* block, int numBlock) {
+  auto [x, y] = lineTracker.getPixyCoord(6, block, numBlock); // orange shayla is 6
   Serial.print(x);
   Serial.print("\t");
   Serial.println(y);
@@ -93,17 +94,21 @@ void setup() {
 void loop() {
   checkButton(leftMotor, rightMotor);  // Check button state and toggle robotRunning state
   if (robotRunning) {
-    int pixyError = lineTracker.readLinePosition();  // +160 (far left drift) to -160 (far right drift)
+    pixy.ccc.getBlocks();
+    const auto* blocks = pixy.ccc.blocks;
+    int numBlocks = pixy.ccc.numBlocks;
+
+    int pixyError = lineTracker.readLinePosition(blocks, numBlocks);  // +160 (far left drift) to -160 (far right drift)
     
-    lineTracker.findBullseye(100, 40, 30, 20);
-    if (lineTracker.isBullseye()) {
+    lineTracker.findBullseye(100, 40, 30, 20, blocks, numBlocks);
+    if (lineTracker.getBullseye()) {
       leftMotor.stop();
       rightMotor.stop();
       robotRunning = false;
-      // set bullseye to false
+      lineTracker.setBullseye(false);
       debugPrint("bullseye found in stopping range");
     }
-    if (!lineTracker.isLineDetected()) {
+    if (!lineTracker.getLineDetected()) {
       leftMotor.stop();
       rightMotor.stop();
       robotRunning = false;
