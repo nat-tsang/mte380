@@ -1,166 +1,130 @@
-/**
- * @brief This main loop runs the main state diagram for Piddy with steering detection
+/** 
+ * @brief This file is the main control loop for Piddy with velocity control and steering control
+ * Currently untested, so save as .bak so that the compiler will ignore it. 
  */
+#include <Arduino.h>
+#include <Config.h>
+#include <Motor.h>
+#include <Fan.h>
+#include <ServoGripper.h>
+#include <EncoderReader.h>
+#include <PixyLineTracker.h>
+#include <Filter.h>
+#include <PIDController.h>
+#include <TurnController.h>
+#include <Helpers.h>
 
- #include <Arduino.h>
- #include <Pixy2.h>
- #include <Servo.h>
- #include <PixyLineTracker.h>
- 
- Servo myServo;
- Pixy2 pixy;
+// Bluetooth Serial
+#define BTSerial Serial1
 
- PixyLineTracker lineTracker; // signature for red line is 1
+volatile long encoder1Count = 0;
+volatile long encoder2Count = 0;
+EncoderReader rightEncoder(ENCODER_IN5, ENCODER_IN6);
+EncoderReader leftEncoder(ENCODER_IN3, ENCODER_IN4);
 
- const int FAN = 20;
- const int u2_IN2 = 8; 
- const int u2_IN1 = 9; 
- const int u3_IN2 = 6;
- const int u3_IN1 = 7; // left 
- 
- const int START_SIG = 22; // Pin 22 is connected to button
- const int SERVO = 5;
- 
- const int minPulse = 700;   // microseconds for ~0 degrees
- const int maxPulse = 2000;  // microseconds for ~120 degrees
- 
- // PID constants (tune these values based on your robot's behavior)
- double Kp = 0.5;  // Proportional gain
- double Ki = 0.0;  // Integral gain (may not be needed for line following)
- double Kd = 0.08;  // Derivative gain (start at 0 before tuning)
- 
- // PID variables
- double setpoint = 157.5;       // Center of Pixy's frame (315/2)
- double previous_error = 0;  // For derivative calculation
- double integral = 0;        // For integral term
- unsigned long previous_time = 0;  // For time step calculation
- 
- // Motor base speed (adjust based on your robot's desired speed)
- int base_speed = 70;
- bool go = false;
+Motor rightMotor(u2_IN1, u2_IN2, true);
+Motor leftMotor(u3_IN1, u3_IN2, false);
 
-   // Function to set motor speeds and directions
-void setMotorSpeeds(int left_speed, int right_speed) {
-    // Control left motor
-    if (left_speed > 0) {
-        analogWrite(u2_IN1, LOW);
-        analogWrite(u2_IN2, left_speed);
-    } else if (left_speed < 0) {
-        analogWrite(u2_IN1, -left_speed); // Convert negative speed to positive PWM
-        analogWrite(u2_IN2, LOW);
-    } else {
-        analogWrite(u2_IN1, 255);
-        analogWrite(u2_IN2, 255);
-    }
+Fan fan(FAN);
+ServoGripper gripper(SERVO, minPulse, maxPulse);
 
-    // Control right motor
-    if (right_speed > 0) {
-        analogWrite(u3_IN1, right_speed);
-        analogWrite(u3_IN2, LOW);
-    } else if (right_speed < 0) { 
-        analogWrite(u3_IN1, LOW);
-        analogWrite(u3_IN2, -right_speed); // Convert negative speed to positive PWM
-    } else {
-        analogWrite(u3_IN1, 255);
-        analogWrite(u3_IN2, 255); 
-    }
+// Instantiate PID with gains from Config
+PIDController linePID(LINE_KP, LINE_KI, LINE_KD);
+PIDController leftVelocityPID(LEFT_VELOCITY_KP, LEFT_VELOCITY_KD, LEFT_VELOCITY_KI);
+PIDController rightVelocityPID(RIGHT_VELOCITY_KP, RIGHT_VELOCITY_KD, RIGHT_VELOCITY_KI);
+
+PixyLineTracker lineTracker; // signature for red line is 1
+
+TurnController turnController(leftMotor, rightMotor, leftEncoder, rightEncoder, WHEEL_BASE, WHEEL_DIAMETER);
+
+float targetVelocity = 65;  //PWM forward 
+
+void debugPrint(String msg) {
+  Serial.println(msg);
+  BTSerial.println(msg);
 }
 
- void setup() {
-    Serial.begin(115200);
-    pinMode(u2_IN1, OUTPUT);
-    pinMode(u2_IN2, OUTPUT);
-    pinMode(u3_IN1, OUTPUT);
-    pinMode(u3_IN2, OUTPUT);
-    pinMode(FAN, OUTPUT);
-    digitalWrite(FAN, LOW); // Keep fan off
-    pinMode(START_SIG, INPUT_PULLDOWN);
-
-    // Initialize Pixy2 camera
-    pixy.init();
-    pixy.changeProg("color_connected_components");
-    myServo.attach(SERVO, minPulse, maxPulse);
-    myServo.writeMicroseconds(maxPulse);
-    // Record initial time
-    previous_time = millis();
+bool legoManAlign(int thresholdX, int thresholdY) {
+  auto [x, y] = lineTracker.getPixyCoord(6); // orange shayla is 6
+  Serial.print(x);
+  Serial.print("\t");
+  Serial.println(y);
+  if (x > 0 && y > 0) {
+    int x_error = X_CENTER - x; // positive if legoman is to the left, negative if legoman is to the right
+    // int y_error = thresholdY - y;  // If lego man is further, y is smaller. Therefore, y_error is larger.
+    
+    if (abs(x_error) < thresholdX && y > thresholdY) {  // TODO: What if lego man in close enough in y but not centered
+      Serial.println("Legoman is centered, stopping");
+      leftMotor.stop();
+      rightMotor.stop();
+      return true;
+    } else {
+      // int driveSpeed = y_error * LEGO_KPy;
+      int turnSpeed = x_error * LEGO_KPx;    // Positive means turn right, negative means turn left
+      leftMotor.setSpeed(60 - turnSpeed);
+      rightMotor.setSpeed(60 + turnSpeed);  
+    }
+  } else {
+    // Lego man not detected, spin till in view 
+    leftMotor.stop();
+    rightMotor.stop();
   }
-  
-  void loop() {
+  return false;
+}
 
-    // static bool lastButtonState = LOW;        
-    int buttonState = digitalRead(START_SIG);
-    if (buttonState) {
-      while(digitalRead(START_SIG)){
-        Serial.println("Button still pressed. Take finger off.");
-      }
-      go = !go;
-    }
-  
-    if (go){
-      Serial.println("starting line following");
-      // Calculate time step (dt) in seconds
-      unsigned long current_time = millis();
-      double dt = (current_time - previous_time) / 1000.0;
-      previous_time = current_time;
-  
-      // Get colour features  features from Pixy
-      pixy.ccc.getBlocks();
-  
-      myServo.writeMicroseconds(maxPulse);
+void setup() {
+  Serial.begin(9600);
+  BTSerial.begin(9600);
+  debugPrint("Code uploaded.");
+  initButton(START_SIG);  // Initialize button pin
+  leftEncoder.reset();
+  rightEncoder.reset();
+  linePID.reset();
+  fan.turnOff(); // Turn fan off at startup
+  gripper.attach(); // Attach servo at startup
+  // calibrateMotors();  // << Run calibration once
+  lineTracker.begin();
 
-      if (pixy.ccc.getBlocks() > 0) {
-        for (int i = 0; i < pixy.ccc.numBlocks; i++) {
-          if (pixy.ccc.blocks[i].m_signature == 2) {
-            int x_range = abs(100 - pixy.ccc.blocks[i].m_x);
-            // int y_range = abs(yCrit - pixy.ccc.blocks[i].m_y);
-            if (pixy.ccc.blocks[i].m_y > 40 && x_range < 30) {
-                go = false;
-                setMotorSpeeds(0,0);
-                myServo.writeMicroseconds(minPulse);
-                Serial.println("bullseye detected in range");
-            }
-        }
-          else if (pixy.ccc.blocks[i].m_signature == 1) {
-            // Use the x-position of the largest red block to control the motors
-            int x = pixy.ccc.blocks[0].m_x;
-            // Calculate error (setpoint - current position)
-            double error = setpoint - x;
-            // working at 5, setting to 10 to match fan testing
-            if (abs(error) < 10) { 
-              error = 0; // Filter out wobble/correction for very small errors
-            }
-  
-            // Update integral term
-            integral += error * dt;
-  
-            // Calculate derivative term
-            double derivative = (error - previous_error) / dt;
-  
-            // Compute PID output
-            double output = Kp * error + Ki * integral + Kd * derivative;
-  
-            // Store current error for next iteration
-            previous_error = error;
-  
-            // Calculate motor speeds (differential drive)
-            int left_speed = constrain(base_speed + output, -150, 150);
-            int right_speed = constrain(base_speed - output, -150, 150);
-  
-            // Apply speeds to motors
-            Serial.println("red line seen");
-            setMotorSpeeds(left_speed, right_speed);
-            // setMotorSpeeds(0, 0);
-          } 
-        }
-      } else {
-        // No line detected; stop the robot
-        setMotorSpeeds(0, 0);
-        
-        Serial.println("No line detected");
-      }
+  // Close gripper & turn off fan
+  gripper.close();
+  fan.turnOff();
+}
+
+void loop() {
+  checkButton(leftMotor, rightMotor);  // Check button state and toggle robotRunning state
+  if (robotRunning) {
+    int pixyError = lineTracker.readLinePosition();  // +160 (far left drift) to -160 (far right drift)
+    
+    lineTracker.findBullseye(100, 40, 30, 20);
+    if (lineTracker.isBullseye()) {
+      leftMotor.stop();
+      rightMotor.stop();
+      robotRunning = false;
+      // set bullseye to false
+      debugPrint("bullseye found in stopping range");
     }
-    else {
-      // If off, turn motors off (brake)
-      setMotorSpeeds(0, 0);
+    if (!lineTracker.isLineDetected()) {
+      leftMotor.stop();
+      rightMotor.stop();
+      robotRunning = false;
+      linePID.reset();  // Optional: Reset PID when line is lost
+      debugPrint("Line lost - stopping");
+      return; // Skip the rest of the loop
     }
+
+    // === Line Tracking Error from Pixy ===
+    float steeringCorrection = linePID.compute(pixyError);  // Output is differential m/s, -ve means turn left, +ve means turn right
+
+    float leftPWM = targetVelocity + steeringCorrection;
+    float rightPWM = targetVelocity - steeringCorrection;
+
+    // === Apply Motor Commands ===
+    leftMotor.setSpeed(constrain(leftPWM, 0, 150));
+    rightMotor.setSpeed(constrain(rightPWM, 0, 150));
+    delay(10);  // 100 Hz update rate
+  } 
+  else {
+    leftMotor.stop();
+    rightMotor.stop();
+  }
 }
