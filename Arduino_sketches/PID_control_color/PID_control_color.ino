@@ -28,7 +28,7 @@ double integral = 0;        // For integral term
 unsigned long previous_time = 0;  // For time step calculation
 
 // Motor base speed (adjust based on your robot's desired speed)
-int base_speed = 60;
+int base_speed = 70;
 bool go = false;
 
 float emaFiltered = 0;
@@ -129,6 +129,7 @@ void loop() {
     } else {
       // No line detected; stop the robot
       setMotorSpeeds(0, 0);
+      
       Serial.println("No line detected");
     }
   }

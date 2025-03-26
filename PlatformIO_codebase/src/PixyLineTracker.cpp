@@ -44,7 +44,7 @@ std::tuple<int16_t, int16_t> PixyLineTracker::getPixyCoord(int blockSig) {
         for (int i = 0; i < pixy.ccc.numBlocks; i++) {
             if (pixy.ccc.blocks[i].m_signature == blockSig) {
                 int16_t x = pixy.ccc.blocks->m_x;
-                int16_t y = pixy.ccc.blocks->m_y;   //ASK NATALIE ABOUT THIS *CHELS SAYS FIXED BY SIG COUNT
+                int16_t y = pixy.ccc.blocks->m_y;   
                 return std::make_tuple(x, y);
             }
         }
