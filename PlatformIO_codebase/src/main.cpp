@@ -5,9 +5,13 @@
  #include <Arduino.h>
  #include <Pixy2.h>
  #include <Servo.h>
+ #include <PixyLineTracker.h>
  
  Servo myServo;
  Pixy2 pixy;
+
+ PixyLineTracker lineTracker; // signature for red line is 1
+
  const int FAN = 20;
  const int u2_IN2 = 8; 
  const int u2_IN1 = 9; 
@@ -75,6 +79,7 @@ void setMotorSpeeds(int left_speed, int right_speed) {
     // Initialize Pixy2 camera
     pixy.init();
     pixy.changeProg("color_connected_components");
+    myServo.attach(SERVO, minPulse, maxPulse);
     myServo.writeMicroseconds(maxPulse);
     // Record initial time
     previous_time = millis();
@@ -92,6 +97,7 @@ void setMotorSpeeds(int left_speed, int right_speed) {
     }
   
     if (go){
+      Serial.println("starting line following");
       // Calculate time step (dt) in seconds
       unsigned long current_time = millis();
       double dt = (current_time - previous_time) / 1000.0;
@@ -105,17 +111,15 @@ void setMotorSpeeds(int left_speed, int right_speed) {
       if (pixy.ccc.getBlocks() > 0) {
         for (int i = 0; i < pixy.ccc.numBlocks; i++) {
           if (pixy.ccc.blocks[i].m_signature == 2) {
-            pixy.ccc.blocks[i].print();
-            int x_range = 175 - pixy.ccc.blocks[i].m_x;
-            int y_range = 50 - pixy.ccc.blocks[i].m_y;
-            if (abs(x_range) < 15 && abs(y_range) < 20){
-              go = false;
-              setMotorSpeeds(0, 0);
-              Serial.println("Bullseye Detected in range");
-            } else {
-              Serial.println("No bullseye in stopping range");
+            int x_range = abs(100 - pixy.ccc.blocks[i].m_x);
+            // int y_range = abs(yCrit - pixy.ccc.blocks[i].m_y);
+            if (pixy.ccc.blocks[i].m_y > 40 && x_range < 30) {
+                go = false;
+                setMotorSpeeds(0,0);
+                myServo.writeMicroseconds(minPulse);
+                Serial.println("bullseye detected in range");
             }
-          }
+        }
           else if (pixy.ccc.blocks[i].m_signature == 1) {
             // Use the x-position of the largest red block to control the motors
             int x = pixy.ccc.blocks[0].m_x;

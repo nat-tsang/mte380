@@ -1,0 +1,119 @@
+/** 
+ * @brief This file is the main control loop for Piddy with velocity control and steering control
+ * Currently untested, so save as .bak so that the compiler will ignore it. 
+ */
+#include <Arduino.h>
+#include <Config.h>
+#include <Motor.h>
+#include <Fan.h>
+#include <ServoGripper.h>
+#include <EncoderReader.h>
+#include <PixyLineTracker.h>
+#include <Filter.h>
+#include <PIDController.h>
+#include <TurnController.h>
+#include <Helpers.h>
+
+volatile long encoder1Count = 0;
+volatile long encoder2Count = 0;
+EncoderReader rightEncoder(ENCODER_IN5, ENCODER_IN6);
+EncoderReader leftEncoder(ENCODER_IN3, ENCODER_IN4);
+
+Motor rightMotor(u2_IN1, u2_IN2, true);
+Motor leftMotor(u3_IN1, u3_IN2, false);
+
+Fan fan(FAN);
+ServoGripper gripper(SERVO, minPulse, maxPulse);
+
+// Instantiate PID with gains from Config
+PIDController linePID(LINE_KP, LINE_KI, LINE_KD);
+PIDController leftVelocityPID(LEFT_VELOCITY_KP, LEFT_VELOCITY_KD, LEFT_VELOCITY_KI);
+PIDController rightVelocityPID(RIGHT_VELOCITY_KP, RIGHT_VELOCITY_KD, RIGHT_VELOCITY_KI);
+
+PixyLineTracker lineTracker; // signature for red line is 1
+
+TurnController turnController(leftMotor, rightMotor, leftEncoder, rightEncoder, WHEEL_BASE, WHEEL_DIAMETER);
+
+float targetVelocity = 65;  //PWM forward 
+
+bool legoManAlign(int thresholdX, int thresholdY) {
+  auto [x, y] = lineTracker.getPixyCoord(LEGO_SIG); // Lego man signature is 4
+  Serial.print(x);
+  Serial.print("\t");
+  Serial.println(y);
+  if (x > 0 && y > 0) {
+    int x_error = X_CENTER - x; // positive if legoman is to the left, negative if legoman is to the right
+    // int y_error = thresholdY - y;  // If lego man is further, y is smaller. Therefore, y_error is larger.
+    
+    if (abs(x_error) < thresholdX && y > thresholdY) {  // TODO: What if lego man in close enough in y but not centered
+      Serial.println("Legoman is centered, stopping");
+      leftMotor.stop();
+      rightMotor.stop();
+      return true;
+    } else {
+      // int driveSpeed = y_error * LEGO_KPy;
+      int turnSpeed = x_error * LEGO_KPx;    // Positive means turn right, negative means turn left
+      leftMotor.setSpeed(60 - turnSpeed);
+      rightMotor.setSpeed(60 + turnSpeed);  
+    }
+  } else {
+    // Lego man not detected, spin till in view 
+    leftMotor.stop();
+    rightMotor.stop();
+  }
+  return false;
+}
+
+void setup() {
+  Serial.begin(115200);
+  initButton(START_SIG);  // Initialize button pin
+  leftEncoder.reset();
+  rightEncoder.reset();
+  linePID.reset();
+  fan.turnOff(); // Turn fan off at startup
+  gripper.attach(); // Attach servo at startup
+  // calibrateMotors();  // << Run calibration once
+  lineTracker.begin();
+
+  // Close gripper & turn off fan
+  gripper.close();
+  fan.turnOff();
+}
+
+void loop() {
+  checkButton(leftMotor, rightMotor);  // Check button state and toggle robotRunning state
+  if (robotRunning) {
+    int pixyError = lineTracker.readLinePosition();  // +160 (far left drift) to -160 (far right drift)
+    
+    lineTracker.findBullseye(100, 40, 30, 20);
+    if (lineTracker.isBullseye()) {
+      leftMotor.stop();
+      rightMotor.stop();
+      Serial.println("bullseye found in stopping range");
+      if (legoManAlign(30, 145))
+    }
+    if (!lineTracker.isLineDetected()) {
+      leftMotor.stop();
+      rightMotor.stop();
+      linePID.reset();  // Optional: Reset PID when line is lost
+      Serial.println("Line lost - stopping");
+      return; // Skip the rest of the loop
+    }
+
+    // === Line Tracking Error from Pixy ===
+    float steeringCorrection = linePID.compute(pixyError);  // Output is differential m/s, -ve means turn left, +ve means turn right
+
+    float leftPWM = targetVelocity + steeringCorrection;
+    float rightPWM = targetVelocity - steeringCorrection;
+
+    // === Apply Motor Commands ===
+    leftMotor.setSpeed(constrain(leftPWM, 0, 150));
+    rightMotor.setSpeed(constrain(rightPWM, 0, 150));
+    delay(10);  // 100 Hz update rate
+  } 
+  else {
+    leftMotor.stop();
+    rightMotor.stop();
+    Serial.println("Buton pressed, robot is stopped");
+  }
+}
