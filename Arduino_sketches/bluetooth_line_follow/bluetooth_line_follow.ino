@@ -31,13 +31,22 @@ unsigned long previous_time = 0;  // For time step calculation
 int base_speed = 70;
 bool go = false;
 
-float emaFiltered = 0;
-float smoothingFactor = 0.5;
+// Bluetooth Serial
+#define BTSerial Serial1
+
+// #include <SoftwareSerial.h>
+
+// //Create software serial object to communicate with HC-05
+// SoftwareSerial mySerial(3, 2); //HC-05 Tx & Rx is connected to Arduino #3 & #2
+
 
 void setup() {
   // Start serial communication for debugging
-  Serial.begin(115200);
-  Serial.println("Serial is starting");
+  Serial.begin(9600);
+  Serial.println("Serial is starting");   // USB Debug
+  
+  BTSerial.begin(9600);    // Bluetooth HC-05
+  BTSerial.print("Some debug");
   pinMode(u2_IN1, OUTPUT);
   pinMode(u2_IN2, OUTPUT);
   pinMode(u3_IN1, OUTPUT);
@@ -57,6 +66,8 @@ void setup() {
 }
 
 void loop() {
+  BTSerial.println("Hi");
+  Serial.println("Fuck this");
 
   // static bool lastButtonState = LOW;        
   int buttonState = digitalRead(START_SIG);
@@ -90,12 +101,13 @@ void loop() {
             setMotorSpeeds(0, 0);
             Serial.println("Bullseye Detected in range");
           } else {
-            Serial.println("No bullseye in stopping range");
+            //Serial.println("No bullseye in stopping range");
           }
         }
         else if (pixy.ccc.blocks[i].m_signature == 1) {
-          // Use the x-position of the vector's tail (closest to robot)
+          // Use the x-position
           int x = pixy.ccc.blocks[0].m_x;
+          debugPrint(x);
 
           // Calculate error (setpoint - current position)
           double error = setpoint - x;
@@ -121,7 +133,7 @@ void loop() {
           int right_speed = constrain(base_speed - output, -150, 150);
 
           // Apply speeds to motors
-          Serial.println("red line seen");
+          debugPrint("red line seen");
           setMotorSpeeds(left_speed, right_speed);
           // setMotorSpeeds(0, 0);
         } 
@@ -129,14 +141,18 @@ void loop() {
     } else {
       // No line detected; stop the robot
       setMotorSpeeds(0, 0);
-      
-      Serial.println("No line detected");
+      debugPrint("No line detected");
     }
   }
   else {
     // If off, turn motors off (brake)
     setMotorSpeeds(0, 0);
   }
+  //   // BLUETOOTH HANDLING (Non-blocking)
+  // if (BTSerial.available()) {
+  //   String btCommand = BTSerial.readStringUntil('\n');
+  //   handleBluetoothCommand(btCommand);
+  // }
 }
 
 // Function to set motor speeds and directions
@@ -163,5 +179,23 @@ void setMotorSpeeds(int left_speed, int right_speed) {
   } else {
     analogWrite(u3_IN1, 255);
     analogWrite(u3_IN2, 255); 
+  }
+}
+
+void debugPrint(String msg) {
+  Serial.print(msg);
+  BTSerial.print(msg);
+}
+
+void handleBluetoothCommand(String cmd) {
+  cmd.trim(); // Remove whitespace
+  Serial.print("Received Bluetooth: ");
+  Serial.println(cmd);
+
+  // Example: change Kp on the fly
+  if (cmd.startsWith("KP:")) {
+    Kp = cmd.substring(3).toFloat();
+    Serial.print("Updated Kp to ");
+    Serial.println(Kp);
   }
 }
