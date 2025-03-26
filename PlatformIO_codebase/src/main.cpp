@@ -1,6 +1,6 @@
 /** 
- * @brief This file is the main control loop for Piddy with velocity control and steering control
- * Currently untested, so save as .bak so that the compiler will ignore it. 
+ * @brief This file is the main control loop for Piddy 
+ * WITH HELPERS, NO STATE MACHINE 
  */
 #include <Arduino.h>
 #include <Config.h>
@@ -47,15 +47,15 @@ void debugPrint(String msg) {
 
 bool legoManAlign(int thresholdX, int thresholdY, const Block* block, int numBlock) {
   auto [x, y] = lineTracker.getPixyCoord(6, block, numBlock); // orange shayla is 6
-  Serial.print(x);
-  Serial.print("\t");
-  Serial.println(y);
+  BTSerial.print(x);
+  BTSerial.print("\t");
+  BTSerial.println(y);
   if (x > 0 && y > 0) {
     int x_error = X_CENTER - x; // positive if legoman is to the left, negative if legoman is to the right
     // int y_error = thresholdY - y;  // If lego man is further, y is smaller. Therefore, y_error is larger.
     
     if (abs(x_error) < thresholdX && y > thresholdY) {  // TODO: What if lego man in close enough in y but not centered
-      Serial.println("Legoman is centered, stopping");
+      debugPrint("Legoman is centered, stopping");
       leftMotor.stop();
       rightMotor.stop();
       return true;
@@ -76,19 +76,17 @@ bool legoManAlign(int thresholdX, int thresholdY, const Block* block, int numBlo
 void setup() {
   Serial.begin(9600);
   BTSerial.begin(9600);
-  debugPrint("Code uploaded.");
   initButton(START_SIG);  // Initialize button pin
   leftEncoder.reset();
   rightEncoder.reset();
   linePID.reset();
   fan.turnOff(); // Turn fan off at startup
   gripper.attach(); // Attach servo at startup
-  // calibrateMotors();  // << Run calibration once
   lineTracker.begin();
-
   // Close gripper & turn off fan
   gripper.close();
   fan.turnOff();
+  debugPrint("Code uploaded.");
 }
 
 void loop() {
@@ -105,8 +103,9 @@ void loop() {
       leftMotor.stop();
       rightMotor.stop();
       robotRunning = false;
-      lineTracker.setBullseye(false);
+      lineTracker.setBullseye(false);      
       debugPrint("bullseye found in stopping range");
+      // legoManAlign(30, 145, blocks, numBlocks);
     }
     if (!lineTracker.getLineDetected()) {
       leftMotor.stop();

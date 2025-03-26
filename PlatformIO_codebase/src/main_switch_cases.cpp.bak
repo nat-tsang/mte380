@@ -1,6 +1,7 @@
 /**
  * @brief This main loop runs the main state diagram for Piddy with steering detection
- */
+ * THIS IS SWITCH CASE VERSION 
+*/
 
 #include <Arduino.h>
 #include <Config.h>
@@ -13,6 +14,8 @@
 #include <PIDController.h>
 #include <TurnController.h>
 #include <Helpers.h>
+
+#define BTSerial Serial1
 
 EncoderReader rightEncoder(ENCODER_IN5, ENCODER_IN6);
 EncoderReader leftEncoder(ENCODER_IN3, ENCODER_IN4);
@@ -27,16 +30,16 @@ ServoGripper gripper(SERVO, minPulse, maxPulse);
 PIDController linePID(LINE_KP, LINE_KI, LINE_KD);
 
 PixyLineTracker lineTracker; // Pixy object for line, bullseye and legoman detection
+Pixy2 pixy;
 
 Filter<float, 3> pixyErrorFilter;    // For Pixy X-position (float)
 Filter<float, 3> speedFilter;       // For encoder speeds (float)
 
-
 TurnController turnController(leftMotor, rightMotor, leftEncoder, rightEncoder, WHEEL_BASE, WHEEL_DIAMETER);
 
 float targetVelocity = 1.3;  // m/s forward speed
-float rightbasePWM = 65;  // Base PWM value
-float leftbasePWM = 65;  // Base PWM value
+float rightbasePWM = 70;  // Base PWM value
+float leftbasePWM = 70;  // Base PWM value
 bool hasTurned = false;
 
 enum PiddyState {
@@ -49,17 +52,22 @@ enum PiddyState {
 
 PiddyState currentState = IDLE;
 
-bool legoManAlign(int thresholdX, int thresholdY) {
-  auto [x, y] = lineTracker.getPixyCoord(LEGO_SIG); // Lego man signature is 4
-  Serial.print(x);
-  Serial.print("\t");
-  Serial.println(y);
+void debugPrint(String msg) {
+  Serial.println(msg);
+  BTSerial.println(msg);
+}
+
+bool legoManAlign(int thresholdX, int thresholdY, const Block* block, int numBlock) {
+  auto [x, y] = lineTracker.getPixyCoord(6, block, numBlock); // orange shayla is 6
+  BTSerial.print(x);
+  BTSerial.print("\t");
+  BTSerial.println(y);
   if (x > 0 && y > 0) {
     int x_error = X_CENTER - x; // positive if legoman is to the left, negative if legoman is to the right
     // int y_error = thresholdY - y;  // If lego man is further, y is smaller. Therefore, y_error is larger.
     
     if (abs(x_error) < thresholdX && y > thresholdY) {  // TODO: What if lego man in close enough in y but not centered
-      Serial.println("Legoman is centered, stopping");
+      debugPrint("Legoman is centered, stopping");
       leftMotor.stop();
       rightMotor.stop();
       return true;
@@ -88,6 +96,7 @@ void setup() {
   fan.turnOff(); // Turn fan off at startup
   lineTracker.begin();
   lineTracker.setLampOFF();
+  debugPrint("Code uploaded. ");
 }
 
 void loop() {
@@ -99,33 +108,33 @@ void loop() {
     hasTurned = false;
     linePID.reset();
     pixyErrorFilter.reset();
-    lineTracker.setLampOFF();
     currentState = IDLE;
   }
+
+  pixy.ccc.getBlocks();
+  const auto* blocks = pixy.ccc.blocks;
+  int numBlocks = pixy.ccc.numBlocks;
 
   switch (currentState) {
     case IDLE:
       leftMotor.stop();
       rightMotor.stop();
-      lineTracker.setLampOFF();
       break; 
 
     case LINE_FOLLOWING: {
-      // Serial.println("Line following now. ");
-      float pixyError = lineTracker.readLinePosition();  // +157.5 (far left drift) to -157.5 (far right drift)
-      // float filteredError = pixyErrorFilter.computeEMA(pixyError);  // Using your Filter class
+      float pixyError = lineTracker.readLinePosition(blocks, numBlocks);  // +157.5 (far left drift) to -157.5 (far right drift)
       
-      lineTracker.findBullseye(100, 40, 30, 20); // currently on nightime, 175, 50, 30, 20 (daytime) 175, 50, 50, 20 (more forgiving x)
-      if (lineTracker.isBullseye()) {
+      lineTracker.findBullseye(100, 35, 50, 20, blocks, numBlocks); // currently on nightime, 175, 50, 30, 20 (daytime) 175, 50, 50, 20 (more forgiving x)
+      if (lineTracker.getBullseye()) {
         leftMotor.stop();
         rightMotor.stop();
-        Serial.println("Bullseye found in stopping range.");
+        debugPrint("Bullseye found in stopping range.");
         currentState = LEGOMAN_ALIGN;
         break;
       }
 
-      if (!lineTracker.isLineDetected()) {
-        Serial.println("No line seen");
+      if (!lineTracker.getLineDetected()) {
+        debugPrint("No line seen");
         leftMotor.stop();
         rightMotor.stop();
         linePID.reset();
@@ -145,40 +154,25 @@ void loop() {
       
       // === Apply Motor Commands ===
       leftMotor.setSpeed(leftPWM);
-      rightMotor.setSpeed(rightPWM);
-
-      // Serial.print(">");
-      // Serial.print("steeringCorrection: ");
-      // Serial.print(steeringCorrection); 
-      // Serial.print(", filteredError: ");
-      // Serial.print(pixyError);
-      // Serial.print(", LeftPWM: ");
-      // Serial.print(leftPWM); 
-      // Serial.print(", RightPWM: ");
-      // Serial.println(rightPWM); 
-  
+      rightMotor.setSpeed(rightPWM);  
       break;
     }
 
     case LEGOMAN_ALIGN: {
-      // lineTracker.setLampON();
-      if (legoManAlign(30, 145)) {
-        Serial.println("Legoman centered. ");
-        // lineTracker.setLampOFF();
+      if (legoManAlign(30, 145, blocks, numBlocks)) {
+        debugPrint("Legoman centered. ");
         currentState = PICKUP_LEGOMAN;
       }
       break;
     }
     case PICKUP_LEGOMAN: {
       gripper.close();
+      debugPrint("Turning 180 with legoman. ");
       // delay(1000); // debouncing, allows gripper to fully close 
       if (!hasTurned) {
         turnController.turnDegrees(180, 70); // 70 from testing in driveAndTurn.cpp
         hasTurned = true;
       }
-      // if the above turn has problems, definitely will need to edit turnController to turn until red line is found again or smth
-      // currentState = IDLE;
-      lineTracker.setLampON();
       leftMotor.stop();
       rightMotor.stop();
       break;
