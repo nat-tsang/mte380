@@ -209,7 +209,7 @@ void loop() {
       rightMotor.stop();
       currentState = IDLE;
       break;
-  }
+  }   
 }
 
 
