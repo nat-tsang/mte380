@@ -285,10 +285,10 @@ bool legoManAlign(int thresholdX, int thresholdY, const Block* block, int numBlo
         if (x_error > 0) {   // Positive means turns left  
           // leftMotor.setSpeed(-60 - turnSpeed);
           leftMotor.setSpeed(0);
-          rightMotor.setSpeed(60 + turnSpeed);
+          rightMotor.setSpeed(63);
         }
         else if (x_error < 0) {  // Negative means turns right
-          leftMotor.setSpeed(60 + turnSpeed);
+          leftMotor.setSpeed(63);
           // rightMotor.setSpeed(-60 - turnSpeed);
           rightMotor.setSpeed(0);
         }
