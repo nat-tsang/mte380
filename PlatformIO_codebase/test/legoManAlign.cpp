@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <Pixy2.h>
 #include "../include/Config.h"
 #include "../src/Motor.cpp"
 #include "../src/PixyLineTracker.cpp"
@@ -16,6 +17,7 @@ EncoderReader rightEncoder(ENCODER_IN5, ENCODER_IN6);
 EncoderReader leftEncoder(ENCODER_IN3, ENCODER_IN4);
 
 PixyLineTracker lineTracker;
+Pixy2 pixy;
 Fan fan(FAN);
 ServoGripper gripper(SERVO, minPulse, maxPulse);
 
@@ -24,37 +26,33 @@ TurnController turnController(leftMotor, rightMotor, leftEncoder, rightEncoder, 
 bool legoManAligned = false;
 bool hasTurned = false;
 
-// void legoManAlign(int thresholdX, int thresholdY) {
-//   // change this to if bullseye detected when that functionality works.
-//     if (true){
-//       auto [x, y] = lineTracker.getPixyCoord(5); // Lego man signature is 4
-//       Serial.print(x);
-//       Serial.print("\t");
-//       Serial.println(y);
-//       if (x > 0 && y > 0) {
-//         // position lego man in center
-//         int x_error = abs(X_CENTER - x);
-//         int y_error = abs(Y_CENTER - y);
-        
-//         if (x_error < thresholdX && y > thresholdY) {
-//           Serial.println("Legoman is centered, stopping");
-//           leftMotor.stop();
-//           rightMotor.stop();
-//           robotRunning = false;
-//           return;
-//         } else {
-//           int driveSpeed = y_error * LEGO_KPy;
-//           int turnSpeed = x_error * LEGO_KPx;
-//           leftMotor.setSpeed(constrain(driveSpeed + turnSpeed, 63, 255));
-//           rightMotor.setSpeed(constrain(driveSpeed - turnSpeed, 63, 255));
-//         }
-//       } else {
-//         // Lego man not detected, spin till in view 
-//         leftMotor.stop();
-//         rightMotor.stop();
-//       }
-//     }
-// }
+bool legoManAlign(int thresholdX, int thresholdY, const Block* block, int numBlock) {
+  auto [x, y] = lineTracker.getPixyCoord(6, block, numBlock); // orange shayla is 6
+  BTSerial.print(x);
+  BTSerial.print("\t");
+  BTSerial.println(y);
+  if (x > 0 && y > 0) {
+    int x_error = X_CENTER - x; // positive if legoman is to the left, negative if legoman is to the right
+    // int y_error = thresholdY - y;  // If lego man is further, y is smaller. Therefore, y_error is larger.
+    
+    if (abs(x_error) < thresholdX && y > thresholdY) {  // TODO: What if lego man in close enough in y but not centered
+      debugPrint("Legoman is centered, stopping");
+      leftMotor.stop();
+      rightMotor.stop();
+      return true;
+    } else {
+      // int driveSpeed = y_error * LEGO_KPy;
+      int turnSpeed = x_error * LEGO_KPx;    // Positive means turn right, negative means turn left
+      leftMotor.setSpeed(60 - turnSpeed);
+      rightMotor.setSpeed(60 + turnSpeed);  
+    }
+  } else {
+    // Lego man not detected, spin till in view 
+    leftMotor.stop();
+    rightMotor.stop();
+  }
+  return false;
+}
 
 // void legoManAlignHelper(int thresholdX, int thresholdY) {
 //   // change this to if bullseye detected when that functionality works.
@@ -101,13 +99,18 @@ void setup() {
 void loop() {
   checkButton(leftMotor, rightMotor);
   if (robotRunning){
-    leftMotor.stop();
-    rightMotor.stop();
-    gripper.close();
-    if (!hasTurned){
-      turnController.turnDegrees(180, 70); // 70 from testing in driveAndTurn.cpp
-      hasTurned = true;
-    }
+    Serial.print("robot running");
+    pixy.ccc.getBlocks();
+    const Block* blocks = pixy.ccc.blocks;
+    int numBlocks = pixy.ccc.numBlocks;
+
+    if (legoManAlign(30, 145, blocks, numBlocks)) {
+      debugPrint("Legoman centered. ");
+      gripper.close();
+      if (!hasTurned){
+        turnController.turnDegrees(180, 70); // 70 from testing in driveAndTurn.cpp
+        hasTurned = true;
+      }
 
   } else {
     hasTurned = false;
@@ -116,4 +119,5 @@ void loop() {
     rightMotor.stop();
   }
     
+}
 }

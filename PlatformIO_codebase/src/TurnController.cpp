@@ -1,6 +1,7 @@
 #include "TurnController.h"
 #include "PixyLineTracker.h"
 #include "Config.h"
+#include "Helpers.h"
 
 TurnController::TurnController(Motor& leftM, Motor& rightM, EncoderReader& leftE, EncoderReader& rightE, float wheelBaseMeters, float wheelDiameterMeters)
     : leftMotor(leftM), rightMotor(rightM), leftEncoder(leftE), rightEncoder(rightE), wheelBase(wheelBaseMeters) {
@@ -31,10 +32,10 @@ void TurnController::turnDegrees(float degrees, int turnSpeed) {
     // Monitor encoder ticks until target reached
     while (abs(leftEncoder.getTicks()) < targetTicks && abs(rightEncoder.getTicks()) < targetTicks) {
         // Optionally print progress
-        Serial.print("Left ticks: "); Serial.print(abs(leftEncoder.getTicks()));
-        Serial.print(" | Right ticks: "); Serial.println(abs(rightEncoder.getTicks()));
-        Serial.print(" | Target ticks: "); Serial.println(targetTicks);
-        delay(10);
+        BTSerial.print("Left ticks: "); BTSerial.print(abs(leftEncoder.getTicks()));
+        BTSerial.print(" | Right ticks: "); BTSerial.println(abs(rightEncoder.getTicks()));
+        BTSerial.print(" | Target ticks: "); BTSerial.println(targetTicks);
+        delay(15);
     }
 
     // Stop motors after turn

@@ -24,7 +24,7 @@ const int FAN = 20;
 
 const int BATTERY_LEVEL_PIN = 15;
 const float ANALOG_RESOLUTION = 1023.0; // 10-bit resolution (0–1023)
-const float BATTERY_VOLTAGE_THRESHOLD = 7.7;  // Shutdown voltage threshold
+const float BATTERY_VOLTAGE_THRESHOLD = 7.4;  // Shutdown voltage threshold
 
 // Calibration settings
 const int CALIBRATION_PWM = 65;  // Tune based on your motor response
@@ -52,7 +52,7 @@ const float WHEEL_BASE = 0.08; // Distance between wheels in meters
 const float WHEEL_DIAMETER = 0.021; // Wheel diameter in meters
 const float COUNTS_PER_WHEEL_REV = 120.0;  // Real-world counts per wheel rev
 const float WHEEL_CIRCUMFERENCE = PI * WHEEL_DIAMETER; // meters
-const float LEGO_KPx = 0.6;
+const float LEGO_KPx = 0.4;
 const float LEGO_KPy = 0.3;
 
 // Pixy CCC params

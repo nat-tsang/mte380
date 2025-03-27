@@ -2,7 +2,7 @@
 #include <Arduino.h>
 #include "Motor.h"
 
-// #define BTSerial Serial1
+#define BTSerial Serial1
 
 // Global robot run state
 extern bool robotRunning;
@@ -14,4 +14,4 @@ void initButton(int pin);
 // Check button state and toggle robot running state
 void checkButton(Motor& leftMotor, Motor& rightMotor);
 
-// void debugPrint(String msg);
+void debugPrint(String msg);

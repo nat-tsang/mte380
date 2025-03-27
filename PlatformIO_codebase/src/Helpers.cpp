@@ -28,3 +28,8 @@ void checkButton(Motor& leftMotor, Motor& rightMotor) {
     }
     lastButtonState = buttonState;
 }
+
+void debugPrint(String msg) {
+    Serial.println(msg);
+    BTSerial.println(msg);
+  }

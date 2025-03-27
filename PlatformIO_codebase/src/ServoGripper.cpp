@@ -5,7 +5,7 @@ ServoGripper::ServoGripper(int pin, int openPos, int closePos)
 
 void ServoGripper::attach() {
     gripperServo.attach(servoPin);
-    open();  // Start open
+    // open();  // Start open
 }
 
 void ServoGripper::open() {
