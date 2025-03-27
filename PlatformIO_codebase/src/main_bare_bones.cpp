@@ -203,6 +203,7 @@ float checkBatteries(int pin) {
   if (batteryVoltage < BATTERY_VOLTAGE_THRESHOLD) {
     debugPrint("Battery low. SYSTEM SHUTDOWN");
     SYSTEM_SHUTDOWN = true;
+    currentState = IDLE;
     leftMotor.stop();
     rightMotor.stop();
     fan.turnOff();
