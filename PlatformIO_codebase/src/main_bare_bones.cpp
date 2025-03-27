@@ -14,7 +14,7 @@
 #include <Filter.h>
 #include <TurnController.h>
 #include <EncoderReader.h>
-#define BTSerial Serial1
+// #define BTSerial Serial1
 
 EncoderReader rightEncoder(ENCODER_IN5, ENCODER_IN6);
 EncoderReader leftEncoder(ENCODER_IN3, ENCODER_IN4);
@@ -40,7 +40,8 @@ bool hasTurned = false;
 TurnController turnController(leftMotor, rightMotor, leftEncoder, rightEncoder, WHEEL_BASE, WHEEL_DIAMETER);
 
 enum PiddyState {
-  LINE_FOLLOWING,
+  LINE_FOLLOW_PICKUP,
+  LINE_FOLLOW_DROPOFF,
   BULLSEYE_DETECT,
   LEGOMAN_ALIGN,
   PICKUP_LEGOMAN,
@@ -62,7 +63,7 @@ void setup() {
   BTSerial.begin(9600);
 
   gripper.attach(); // Attach servo at startup
-  gripper.close();   // Close gripper
+  gripper.close();
 
   initButton(START_SIG);  // Initialize button pin
   linePID.reset();
@@ -92,8 +93,9 @@ void loop() {
   if (robotRunning != lastRobotRunning) { // If button state changes
     if (robotRunning) {
       debugPrint("Switching to LINE_FOLLOWING");
-      gripper.close();  // Optional: ready for pickup
-      currentState = LINE_FOLLOWING;
+      gripper.open();  // Optional: ready for pickup
+      lineTracker.setBullseye(false);
+      currentState = LINE_FOLLOW_PICKUP;
     } else {
       debugPrint("Switching to IDLE");
       hasTurned = false;
@@ -112,12 +114,13 @@ void loop() {
       rightMotor.stop();
       break; 
 
-    case LINE_FOLLOWING: {
+    case LINE_FOLLOW_PICKUP: {
       float pixyError = lineTracker.readLinePosition(blocks, numBlocks);  // +157.5 (far left drift) to -157.5 (far right drift)
       lineTracker.findBullseye(100, 35, 50, 20, blocks, numBlocks); // currently on nightime, 175, 50, 30, 20 (daytime) 175, 50, 50, 20 (more forgiving x)
       if (lineTracker.getBullseye()) {
         leftMotor.stop();
         rightMotor.stop();
+        delay(500);
         debugPrint("Bullseye found in stopping range.");
         currentState = LEGOMAN_ALIGN;
         break;
@@ -129,7 +132,34 @@ void loop() {
         rightMotor.stop();
         linePID.reset();
         pixyErrorFilter.reset();
-        currentState = IDLE;
+        break; 
+      }
+
+      if (abs(pixyError) < 10.0) {
+        pixyError = 0;
+      }
+
+      double steeringCorrection = linePID.compute(pixyError);  // Output is differential m/s, -ve means turn left, +ve means turn right
+
+      int leftPWM = constrain(leftbasePWM + steeringCorrection, 0, 150);
+      int rightPWM = constrain(rightbasePWM - steeringCorrection, 0, 150);
+      
+      // === Apply Motor Commands ===
+      leftMotor.setSpeed(leftPWM);
+      rightMotor.setSpeed(rightPWM);  
+      break;
+    }
+
+    case LINE_FOLLOW_DROPOFF: {
+      debugPrint("Going home!");
+      float pixyError = lineTracker.readLinePosition(blocks, numBlocks);  // +157.5 (far left drift) to -157.5 (far right drift)
+
+      if (!lineTracker.getLineDetected()) {
+        debugPrint("No line seen");
+        leftMotor.stop();
+        rightMotor.stop();
+        linePID.reset();
+        pixyErrorFilter.reset();
         break; 
       }
 
@@ -159,16 +189,19 @@ void loop() {
     case PICKUP_LEGOMAN: {
       gripper.close();
       debugPrint("Turning 180 with legoman. ");
-      // delay(1000); // debouncing, allows gripper to fully close 
+      delay(500); // debouncing, allows gripper to fully close 
       if (!hasTurned) {
-        turnController.turnDegrees(180, 70); // 70 from testing in driveAndTurn.cpp
+        turnController.turnDegrees(-160, 70); // 70 from testing in driveAndTurn.cpp
         hasTurned = true;
+        delay(500); // Allow robot to stop and not drit past red line?
       }
       // leftMotor.stop();
       // rightMotor.stop();
-      currentState = LINE_FOLLOWING;
+      lineTracker.setBullseye(false);
+      currentState = LINE_FOLLOW_DROPOFF;
       break;
     }
+
     default:
       // safety catch 
       leftMotor.stop();
@@ -216,10 +249,10 @@ void flashPixyLight(int times) {
 }
 
 
-void debugPrint(String msg) {
-  Serial.println(msg);
-  BTSerial.println(msg);
-}
+// void debugPrint(String msg) {
+//   Serial.println(msg);
+//   BTSerial.println(msg);
+// }
 
 
 bool legoManAlign(int thresholdX, int thresholdY, const Block* block, int numBlock) {
