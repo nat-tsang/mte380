@@ -33,9 +33,9 @@ void TurnController::turnDegrees(float degrees, int turnSpeed) {
     while (abs(leftEncoder.getTicks()) < targetTicks && abs(rightEncoder.getTicks()) < targetTicks) {
         // Optionally print progress
         BTSerial.print("Left ticks: "); BTSerial.print(abs(leftEncoder.getTicks()));
-        BTSerial.print(" | Right ticks: "); BTSerial.println(abs(rightEncoder.getTicks()));
+        BTSerial.print(" | Right ticks: "); BTSerial.print(abs(rightEncoder.getTicks()));
         BTSerial.print(" | Target ticks: "); BTSerial.println(targetTicks);
-        delay(15);
+        delay(10);
     }
 
     // Stop motors after turn
@@ -43,40 +43,54 @@ void TurnController::turnDegrees(float degrees, int turnSpeed) {
     rightMotor.stop();
 }
 
-// void TurnController::turnToLegoMan(int turnSpeed, PixyLineTracker& pixyTracker)
-// {
-//     leftEncoder.reset();
-//     rightEncoder.reset();
+void TurnController::turnToRedLine(int turnSpeed, const Block* block, int numBlock)
+{
+    float turnCircumference = PI * WHEEL_BASE;
+    float arcLength = (30.0 / 360.0) * turnCircumference;
+    float metersPerTick = wheelCircumference / COUNTS_PER_WHEEL_REV;
+    long targetTicks = arcLength / metersPerTick;
 
-//     float turnCircumference = PI * WHEEL_BASE;
-//     float arcLength = (360.0 / 360.0) * turnCircumference;  // meters of a full circle (360 turn)
+    int spinLimit = 0;
+    bool foundRedLine = false;
 
-//     // Calculate equivalent encoder ticks for this arc length
-//     float metersPerTick = wheelCircumference / COUNTS_PER_WHEEL_REV;
-//     long targetTicks = arcLength / metersPerTick;
+    while (!foundRedLine && spinLimit < 12) {
+        leftEncoder.reset();
+        rightEncoder.reset();
 
-//     // Determine turn direction
-//     int leftSpeed = 360.0 > 0 ? turnSpeed : -turnSpeed;
-//     int rightSpeed = -leftSpeed;
+        // Determine turn direction
+        int leftSpeed = turnSpeed;
+        int rightSpeed = -turnSpeed;
 
-//     // Start turning
-//     leftMotor.setSpeed(leftSpeed);
-//     rightMotor.setSpeed(rightSpeed);
+        leftMotor.setSpeed(leftSpeed);
+        rightMotor.setSpeed(rightSpeed);
 
-//     while (abs(leftEncoder.getTicks()) < targetTicks && abs(rightEncoder.getTicks()) < targetTicks) {
-//         // Check for LegoMan during turn
-//         auto [x, y] = pixyTracker.getPixyCoord(LEGO_SIG);  // signature of LEGO man
-//         if (x > 0 && y > 0) {  // or use != -1 if you return -1 on failure
-//             Serial.println("LEGO man found! Stopping turn.");
-//             break;
-//         }
-//         // Optionally print progress
-//         Serial.print("Left ticks: "); Serial.print(abs(leftEncoder.getTicks()));
-//         Serial.print(" | Right ticks: "); Serial.println(abs(rightEncoder.getTicks()));
-//         delay(10);
-//     }
+        while (abs(leftEncoder.getTicks()) < targetTicks && abs(rightEncoder.getTicks()) < targetTicks) {
+            BTSerial.print("Left ticks: "); BTSerial.print(abs(leftEncoder.getTicks()));
+            BTSerial.print(" | Right ticks: "); BTSerial.println(abs(rightEncoder.getTicks()));
+            delay(10);
+        }
 
-//     // Stop motors after turn
-//     leftMotor.stop();
-//     rightMotor.stop();
-// }
+        leftMotor.stop();
+        rightMotor.stop();
+
+        if (numBlock > 0) {
+            for (int i = 0; i < numBlock; i++) {
+                if (block[i].m_signature == REDLINE_SIG) {
+                    debugPrint("Red line detected.");
+                    foundRedLine = true;
+                    break;
+                }
+            }
+        }
+
+        if (!foundRedLine) {
+            debugPrint("No red line detected.");
+            spinLimit++;
+            if (spinLimit >= 12) {
+                debugPrint("Spun 360 degrees and no red line found. Exiting.");
+            }
+        }
+
+        delay(200); // Optional pause before next spin
+    }
+}

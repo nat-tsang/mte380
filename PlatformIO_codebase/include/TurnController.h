@@ -18,5 +18,5 @@ public:
 
     // Perform a turn (positive angle = right turn, negative = left turn)
     void turnDegrees(float degrees, int turnSpeed);
-    // void turnToLegoMan(int turnSpeed, PixyLineTracker& pixyTracker);
+    void turnToRedLine(int turnSpeed, const Block* block, int numBlock);
 };

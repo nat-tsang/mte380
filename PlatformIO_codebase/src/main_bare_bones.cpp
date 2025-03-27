@@ -16,7 +16,7 @@
 #include <EncoderReader.h>
 // #define BTSerial Serial1
 
-EncoderReader rightEncoder(ENCODER_IN5, ENCODER_IN6);
+EncoderReader rightEncoder(ENCODER_IN6, ENCODER_IN5);
 EncoderReader leftEncoder(ENCODER_IN3, ENCODER_IN4);
 
 Motor rightMotor(u2_IN1, u2_IN2, true);
@@ -158,6 +158,7 @@ void loop() {
         debugPrint("No line seen");
         leftMotor.stop();
         rightMotor.stop();
+        gripper.open();
         linePID.reset();
         pixyErrorFilter.reset();
         break; 
@@ -179,7 +180,7 @@ void loop() {
     }
 
     case LEGOMAN_ALIGN: {
-      if (legoManAlign(30, 145, blocks, numBlocks)) {
+      if (legoManAlign(30, 135, blocks, numBlocks)) {
         debugPrint("Legoman centered. ");
         currentState = PICKUP_LEGOMAN;
       }
@@ -191,7 +192,7 @@ void loop() {
       debugPrint("Turning 180 with legoman. ");
       delay(500); // debouncing, allows gripper to fully close 
       if (!hasTurned) {
-        turnController.turnDegrees(-160, 70); // 70 from testing in driveAndTurn.cpp
+        turnController.turnDegrees(-130, 70); // 70 from testing in driveAndTurn.cpp
         hasTurned = true;
         delay(500); // Allow robot to stop and not drit past red line?
       }
@@ -257,13 +258,13 @@ void flashPixyLight(int times) {
 
 bool legoManAlign(int thresholdX, int thresholdY, const Block* block, int numBlock) {
   auto [x, y] = lineTracker.getPixyCoord(6, block, numBlock); // orange shayla is 6
-  BTSerial.print(x);
-  BTSerial.print("\t");
-  BTSerial.println(y);
+  BTSerial.print("Shayla x: " + String(x));
+  BTSerial.println ("   |   y: " + String(y));
   if (x > 0 && y > 0) {
     int x_error = X_CENTER - x; // positive if legoman is to the left, negative if legoman is to the right
     // int y_error = thresholdY - y;  // If lego man is further, y is smaller. Therefore, y_error is larger.
-    
+    BTSerial.print("Shayla ERROR: " + String(x_error));
+
     if (abs(x_error) < thresholdX && y > thresholdY) {  // TODO: What if lego man in close enough in y but not centered
       debugPrint("Legoman is centered, stopping");
       leftMotor.stop();
@@ -272,8 +273,11 @@ bool legoManAlign(int thresholdX, int thresholdY, const Block* block, int numBlo
     } else {
       // int driveSpeed = y_error * LEGO_KPy;
       int turnSpeed = x_error * LEGO_KPx;    // Positive means turn right, negative means turn left
-      leftMotor.setSpeed(60 - turnSpeed);
-      rightMotor.setSpeed(60 + turnSpeed);  
+      
+      BTSerial.print("Left PWM: " + String(60 - turnSpeed));
+      BTSerial.println("  |   Right PWM: " + String(60 + turnSpeed));
+      leftMotor.setSpeed(constrain(60 - turnSpeed, 60, 150));
+      rightMotor.setSpeed(constrain(60 + turnSpeed, 60, 150));  
     }
   } else {
     // Lego man not detected, spin till in view 

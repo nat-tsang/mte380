@@ -11,8 +11,8 @@ const int u3_IN1 = 7;
 // Moving fwd will increase encoder count
 const int ENCODER_IN3 = 16; // Drive 2 connected to U3
 const int ENCODER_IN4 = 17; // Drive 2
-const int ENCODER_IN5 = 14; // Drive 1 NEW PINS (right) connected to U2
-const int ENCODER_IN6 = 21; // Drive 1 NEW PINS
+const int ENCODER_IN5 = 18; // Drive 1 NEW PINS (right) connected to U2
+const int ENCODER_IN6 = 19; // Drive 1 NEW PINS
 
 const int START_SIG = 22; // Pin 22 is connected to button
 
@@ -52,7 +52,7 @@ const float WHEEL_BASE = 0.08; // Distance between wheels in meters
 const float WHEEL_DIAMETER = 0.021; // Wheel diameter in meters
 const float COUNTS_PER_WHEEL_REV = 120.0;  // Real-world counts per wheel rev
 const float WHEEL_CIRCUMFERENCE = PI * WHEEL_DIAMETER; // meters
-const float LEGO_KPx = 0.4;
+const float LEGO_KPx = 0.2;
 const float LEGO_KPy = 0.3;
 
 // Pixy CCC params
