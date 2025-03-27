@@ -151,7 +151,7 @@ void loop() {
     }
 
     case LINE_FOLLOW_DROPOFF: {
-      debugPrint("Going home!");
+      debugPrint("Go Shayla Go!");
       float pixyError = lineTracker.readLinePosition(blocks, numBlocks);  // +157.5 (far left drift) to -157.5 (far right drift)
 
       if (!lineTracker.getLineDetected()) {
@@ -250,37 +250,49 @@ void flashPixyLight(int times) {
 }
 
 
-// void debugPrint(String msg) {
-//   Serial.println(msg);
-//   BTSerial.println(msg);
-// }
-
-
 bool legoManAlign(int thresholdX, int thresholdY, const Block* block, int numBlock) {
-  auto [x, y] = lineTracker.getPixyCoord(6, block, numBlock); // orange shayla is 6
+  auto [x, y] = lineTracker.getPixyCoord(6, block, numBlock); // orange shayla is 6,  TODO: Put in config
   BTSerial.print("Shayla x: " + String(x));
   BTSerial.println ("   |   y: " + String(y));
-  if (x > 0 && y > 0) {
+
+  if (x >= 0 && y >= 0) {
     int x_error = X_CENTER - x; // positive if legoman is to the left, negative if legoman is to the right
-    // int y_error = thresholdY - y;  // If lego man is further, y is smaller. Therefore, y_error is larger.
     BTSerial.print("Shayla ERROR: " + String(x_error));
 
-    if (abs(x_error) < thresholdX && y > thresholdY) {  // TODO: What if lego man in close enough in y but not centered
+    if (abs(x_error) < thresholdX && y > thresholdY) { 
       debugPrint("Legoman is centered, stopping");
       leftMotor.stop();
       rightMotor.stop();
       return true;
-    } else {
-      // int driveSpeed = y_error * LEGO_KPy;
-      int turnSpeed = x_error * LEGO_KPx;    // Positive means turn right, negative means turn left
-      
-      BTSerial.print("Left PWM: " + String(60 - turnSpeed));
-      BTSerial.println("  |   Right PWM: " + String(60 + turnSpeed));
-      leftMotor.setSpeed(constrain(60 - turnSpeed, 60, 150));
-      rightMotor.setSpeed(constrain(60 + turnSpeed, 60, 150));  
+    } 
+    else {
+      if (abs(x_error) < thresholdX) { 
+        debugPrint("Legoman is centered");
+        // drive forward only once Shayla is centered
+        if (y < thresholdY) { // Legoman is too far, drive forward slowly
+          debugPrint("Legoman is too far");
+          leftMotor.setSpeed(63);
+          rightMotor.setSpeed(63);
+        }
+      }
+      else if (abs(x_error) > thresholdX) {    // Turn robot on it's center axis
+        debugPrint("Legoman is not centered");
+        
+        int turnSpeed = abs(x_error * LEGO_KPx);    // Positive means turn right, negative means turn left
+        if (x_error > 0) {   // Positive means turns left  
+          leftMotor.setSpeed(-60 - turnSpeed);
+          rightMotor.setSpeed(60 + turnSpeed);
+        }
+        else if (x_error < 0) {  // Negative means turns right
+          leftMotor.setSpeed(60 + turnSpeed);
+          rightMotor.setSpeed(-60 - turnSpeed);
+        }
+      }
+      // Print the current speed of the motors
+      BTSerial.print("Left PWM: " + String(leftMotor.getSpeed()));
+      BTSerial.println("  |   Right PWM: " + String(rightMotor.getSpeed()));
     }
-  } else {
-    // Lego man not detected, spin till in view 
+  } else {   // Lego man not detected, TODO: spin till in view 
     leftMotor.stop();
     rightMotor.stop();
   }

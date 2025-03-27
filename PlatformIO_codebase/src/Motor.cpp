@@ -10,8 +10,7 @@ Motor::Motor(int in1, int in2, bool isReversed)
 void Motor::setSpeed(int speed) {
     currentSpeed = constrain(speed, -255, 255);
     // Flip speed if motor is mounted reversed
-    int actualSpeed = reversed ? -currentSpeed : currentSpeed;
-
+    int actualSpeed = reversed ? -currentSpeed : currentSpeed;  // If reversed if true, set actualSpeed to -currentSpeed, else set it to currentSpeed
     if (actualSpeed > 0) {
         // Forward: PWM on IN1, IN2 LOW
         analogWrite(in1Pin, actualSpeed);
@@ -25,7 +24,6 @@ void Motor::setSpeed(int speed) {
         analogWrite(in1Pin, 255);   // Brake
         analogWrite(in2Pin, 255);
     }
-
 }
 
 int Motor::getSpeed() const {
