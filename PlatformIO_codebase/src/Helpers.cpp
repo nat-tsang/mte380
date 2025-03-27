@@ -29,7 +29,26 @@ void checkButton(Motor& leftMotor, Motor& rightMotor) {
     lastButtonState = buttonState;
 }
 
+String getTimestamp() {
+    unsigned long ms = millis();
+    unsigned long totalSeconds = ms / 1000;
+    unsigned int hours = totalSeconds / 3600;
+    unsigned int minutes = (totalSeconds % 3600) / 60;
+    unsigned int seconds = totalSeconds % 60;
+  
+    char buffer[12];  // HH:MM:SS + null terminator
+    snprintf(buffer, sizeof(buffer), "%02u:%02u:%02u", hours, minutes, seconds);
+    return String(buffer);
+  }
+
+void logWithTimestamp() {
+    BTSerial.print("  [");
+    BTSerial.print(getTimestamp());
+    BTSerial.println("] ");
+}
+
 void debugPrint(String msg) {
     Serial.println(msg);
-    BTSerial.println(msg);
-  }
+    BTSerial.print(msg);
+    logWithTimestamp();
+}

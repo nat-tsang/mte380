@@ -256,11 +256,13 @@ bool legoManAlign(int thresholdX, int thresholdY, const Block* block, int numBlo
   
   auto [x, y] = lineTracker.getPixyCoord(6, block, numBlock); // orange shayla is 6,  TODO: Put in config
   BTSerial.print("Shayla x: " + String(x));
-  BTSerial.println ("   |   y: " + String(y));
+  BTSerial.print ("   |   y: " + String(y));
+  logWithTimestamp();
 
   if (x >= 0 && y >= 0) {
     int x_error = X_CENTER - x; // positive if legoman is to the left, negative if legoman is to the right
     BTSerial.print("Shayla ERROR: " + String(x_error));
+    logWithTimestamp();
 
     if (abs(x_error) < thresholdX && y > thresholdY) { 
       debugPrint("Legoman is centered, stopping");
@@ -295,7 +297,8 @@ bool legoManAlign(int thresholdX, int thresholdY, const Block* block, int numBlo
       }
       // Print the current speed of the motors
       BTSerial.print("Left PWM: " + String(leftMotor.getSpeed()));
-      BTSerial.println("  |   Right PWM: " + String(rightMotor.getSpeed()));
+      BTSerial.print("  |   Right PWM: " + String(rightMotor.getSpeed()));
+      logWithTimestamp();
     }
   } else {   // Lego man not detected, TODO: spin till in view 
     leftMotor.stop();
