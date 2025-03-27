@@ -33,8 +33,8 @@ Pixy2 pixy;
 
 Filter<float, 3> pixyErrorFilter;    // For Pixy X-position (float)
 
-int rightbasePWM = 70;  // Base PWM value
-int leftbasePWM = 70;  // Base PWM value
+int rightbasePWM = 66;  // Base PWM value       PWM of 66 allows robot to stop straight on with bullseye
+int leftbasePWM = 66;  // Base PWM value
 bool hasTurned = false;
 
 TurnController turnController(leftMotor, rightMotor, leftEncoder, rightEncoder, WHEEL_BASE, WHEEL_DIAMETER);
@@ -116,12 +116,14 @@ void loop() {
 
     case LINE_FOLLOW_PICKUP: {
       float pixyError = lineTracker.readLinePosition(blocks, numBlocks);  // +157.5 (far left drift) to -157.5 (far right drift)
-      lineTracker.findBullseye(100, 35, 50, 20, blocks, numBlocks); // currently on nightime, 175, 50, 30, 20 (daytime) 175, 50, 50, 20 (more forgiving x)
+
+      // TODO: Check in Pixy if the following parameters are correct
+      lineTracker.findBullseye(100, 40, 30, 20, blocks, numBlocks); // currently on nightime, 175, 50, 30, 20 (daytime) 175, 50, 50, 20 (more forgiving x)
       if (lineTracker.getBullseye()) {
         leftMotor.stop();
         rightMotor.stop();
-        delay(500);
         debugPrint("Bullseye found in stopping range.");
+        flashPixyLight(1);
         currentState = LEGOMAN_ALIGN;
         break;
       }
@@ -151,7 +153,6 @@ void loop() {
     }
 
     case LINE_FOLLOW_DROPOFF: {
-      debugPrint("Go Shayla Go!");
       float pixyError = lineTracker.readLinePosition(blocks, numBlocks);  // +157.5 (far left drift) to -157.5 (far right drift)
 
       if (!lineTracker.getLineDetected()) {
@@ -164,12 +165,12 @@ void loop() {
         break; 
       }
 
+      debugPrint("Go Shayla Go!");
       if (abs(pixyError) < 10.0) {
         pixyError = 0;
       }
 
       double steeringCorrection = linePID.compute(pixyError);  // Output is differential m/s, -ve means turn left, +ve means turn right
-
       int leftPWM = constrain(leftbasePWM + steeringCorrection, 0, 150);
       int rightPWM = constrain(rightbasePWM - steeringCorrection, 0, 150);
       
@@ -181,20 +182,21 @@ void loop() {
 
     case LEGOMAN_ALIGN: {
       if (legoManAlign(30, 135, blocks, numBlocks)) {
-        debugPrint("Legoman centered. ");
+        debugPrint("Legoman centered. Switching to PICKUP_LEGOMAN");
         currentState = PICKUP_LEGOMAN;
       }
       break;
     }
 
     case PICKUP_LEGOMAN: {
+      delay(250);
       gripper.close();
       debugPrint("Turning 180 with legoman. ");
-      delay(500); // debouncing, allows gripper to fully close 
+      delay(300); // debouncing, allows gripper to fully close 
       if (!hasTurned) {
         turnController.turnDegrees(-130, 70); // 70 from testing in driveAndTurn.cpp
         hasTurned = true;
-        delay(500); // Allow robot to stop and not drit past red line?
+        delay(250); // Allow robot to stop and not drit past red line?
       }
       // leftMotor.stop();
       // rightMotor.stop();
@@ -250,7 +252,8 @@ void flashPixyLight(int times) {
 }
 
 
-bool legoManAlign(int thresholdX, int thresholdY, const Block* block, int numBlock) {
+bool legoManAlign(int thresholdX, int thresholdY, const Block* block, int numBlock) {     // TODO: Do we need to call get blocks again?
+  
   auto [x, y] = lineTracker.getPixyCoord(6, block, numBlock); // orange shayla is 6,  TODO: Put in config
   BTSerial.print("Shayla x: " + String(x));
   BTSerial.println ("   |   y: " + String(y));
@@ -272,7 +275,7 @@ bool legoManAlign(int thresholdX, int thresholdY, const Block* block, int numBlo
         if (y < thresholdY) { // Legoman is too far, drive forward slowly
           debugPrint("Legoman is too far");
           leftMotor.setSpeed(63);
-          rightMotor.setSpeed(63);
+          rightMotor.setSpeed(65);
         }
       }
       else if (abs(x_error) > thresholdX) {    // Turn robot on it's center axis
@@ -280,12 +283,14 @@ bool legoManAlign(int thresholdX, int thresholdY, const Block* block, int numBlo
         
         int turnSpeed = abs(x_error * LEGO_KPx);    // Positive means turn right, negative means turn left
         if (x_error > 0) {   // Positive means turns left  
-          leftMotor.setSpeed(-60 - turnSpeed);
+          // leftMotor.setSpeed(-60 - turnSpeed);
+          leftMotor.setSpeed(0);
           rightMotor.setSpeed(60 + turnSpeed);
         }
         else if (x_error < 0) {  // Negative means turns right
           leftMotor.setSpeed(60 + turnSpeed);
-          rightMotor.setSpeed(-60 - turnSpeed);
+          // rightMotor.setSpeed(-60 - turnSpeed);
+          rightMotor.setSpeed(0);
         }
       }
       // Print the current speed of the motors
