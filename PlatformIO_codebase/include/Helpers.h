@@ -14,4 +14,6 @@ void initButton(int pin);
 // Check button state and toggle robot running state
 void checkButton(Motor& leftMotor, Motor& rightMotor);
 
+String getTimestamp();
+void logWithTimestamp();
 void debugPrint(String msg);
