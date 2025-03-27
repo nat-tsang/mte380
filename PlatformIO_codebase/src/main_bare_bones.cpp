@@ -102,14 +102,6 @@ void loop() {
   }
   lastRobotRunning = robotRunning;
 
-  // if (robotRunning && currentState == IDLE) {
-  //   gripper.close();
-  //   currentState = LINE_FOLLOWING;
-  // } else if (!robotRunning && currentState != IDLE) {
-  //   hasTurned = false;
-  //   currentState = IDLE;
-  // }
-
   pixy.ccc.getBlocks();
   const auto* blocks = pixy.ccc.blocks;
   int numBlocks = pixy.ccc.numBlocks;
@@ -183,7 +175,7 @@ void loop() {
       rightMotor.stop();
       currentState = IDLE;
       break;
-  }
+  }   
 }
 
 
