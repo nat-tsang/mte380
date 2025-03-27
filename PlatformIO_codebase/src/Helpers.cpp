@@ -1,6 +1,7 @@
 #include "Helpers.h"
 
 bool robotRunning = false;     // Global state flag
+bool SYSTEM_SHUTDOWN = false;  // Set to true to enable shutdown
 static int buttonPin;
 static bool lastButtonState = LOW;  // Default LOW due to external pull-down
 
@@ -10,6 +11,8 @@ void initButton(int pin) {
 }
 
 void checkButton(Motor& leftMotor, Motor& rightMotor) {
+    if (SYSTEM_SHUTDOWN) return;
+    
     bool buttonState = digitalRead(buttonPin);
 
     if (lastButtonState == HIGH && buttonState == LOW) {
@@ -25,21 +28,3 @@ void checkButton(Motor& leftMotor, Motor& rightMotor) {
     }
     lastButtonState = buttonState;
 }
-
-// void debugPrint(String msg) {
-//     Serial.print(msg);
-//     BTSerial.print(msg);
-// }
-
-// Helpers::Helpers() {}
-
-// void Helpers::buttonCheck()
-// {
-//     buttonState = digitalRead(START_SIG);
-//     if (buttonState) {
-//         while (digitalRead(START_SIG)) {
-//             Serial.println("Button still pressed. Take finger off.");
-//         }
-//         go = !go;
-//     }
-// }

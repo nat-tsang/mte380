@@ -22,6 +22,10 @@ const int maxPulse = 2000;  // closed
 
 const int FAN = 20;
 
+const int BATTERY_LEVEL_PIN = 15;
+const float ANALOG_RESOLUTION = 1023.0; // 10-bit resolution (0–1023)
+const float BATTERY_VOLTAGE_THRESHOLD = 7.7;  // Shutdown voltage threshold
+
 // Calibration settings
 const int CALIBRATION_PWM = 65;  // Tune based on your motor response
 const int CALIBRATION_TIME = 10000; // ms

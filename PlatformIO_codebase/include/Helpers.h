@@ -6,6 +6,7 @@
 
 // Global robot run state
 extern bool robotRunning;
+extern bool SYSTEM_SHUTDOWN;
 
 // Initialize button pin
 void initButton(int pin);
@@ -14,14 +15,3 @@ void initButton(int pin);
 void checkButton(Motor& leftMotor, Motor& rightMotor);
 
 // void debugPrint(String msg);
-
-// class Helpers {
-//     private:
-//         int buttonState;
-//         bool go = false; 
-
-//     public:
-//         Helpers();
-
-//         void buttonCheck();
-// };
