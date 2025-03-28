@@ -135,7 +135,7 @@ void loop() {
         linePID.reset();
         break; 
       }
-      
+
       if (abs(pixyError) < 10.0) {
         pixyError = 0;
       }
@@ -149,7 +149,7 @@ void loop() {
     }
 
     case LEGOMAN_ALIGN: {
-      if (legoManAlign(40, 140, blocks, numBlocks)) {
+      if (legoManAlign(30, 150, blocks, numBlocks)) {
         debugPrint("Legoman centered. Switching to PICKUP_LEGOMAN");
         currentState = PICKUP_LEGOMAN;
       }
@@ -157,7 +157,7 @@ void loop() {
     }
 
     case PICKUP_LEGOMAN: {
-      delay(250);
+      delay(150);
       gripper.close();
       debugPrint("Turning 180 with legoman. ");
       delay(300); // debouncing, allows gripper to fully close 
@@ -166,12 +166,15 @@ void loop() {
         hasTurned = true;
         delay(250); // Allow robot to stop and not drit past red line?
       }
-      // leftMotor.stop();
-      // rightMotor.stop();
-      lineTracker.setBullseye(false);
-      currentState = LINE_FOLLOW_DROPOFF;
-      linePID.reset();
-      debugPrint("Switching to LINE_FOLLOW_DROPOFF");
+      lineTracker.readLinePosition(blocks, numBlocks);
+      if (!lineTracker.getLineDetected()){
+        turnController.turnDegrees(-30, 70);
+      } else {
+        lineTracker.setBullseye(false);
+        linePID.reset();
+        debugPrint("Switching to LINE_FOLLOW_DROPOFF");
+        currentState = LINE_FOLLOW_DROPOFF;
+      }
       break;
     }
 
@@ -212,22 +215,22 @@ void loop() {
 
     case UNLOAD_SHAYLA: {
       debugPrint("Dropping off Shayla in green box");
-      turnController.turnDegrees(40, 70); // Turn to face green box
-      delay(1000); // Wait for turn to complete
-      leftMotor.setSpeed(65); // Move robot forward
-      rightMotor.setSpeed(65);
-      delay(400); // Wait for robot to move forward
+      turnController.turnDegrees(60, 70); // Turn to face green box
+      delay(500); // Wait for turn to complete
+      leftMotor.setSpeed(70); // Move robot forward
+      rightMotor.setSpeed(70);
+      delay(300); // Wait for robot to move forward
       leftMotor.stop();
       rightMotor.stop();
-      delay(500); // Wait for robot to stop
+      delay(200); // Wait for robot to stop
       gripper.open();
-      delay(500); // Wait for gripper to open
+      delay(100); // Wait for gripper to open
       leftMotor.setSpeed(-65); // Reverse robot
       rightMotor.setSpeed(-65);
       delay(500); // Wait for robot to reverse
       leftMotor.stop();
       rightMotor.stop();
-      turnController.turnDegrees(40, -70); // Turn back to face line
+      turnController.turnDegrees(65, -70); // Turn back to face line
       lineTracker.setGreenBox(false);
       debugPrint("Setting to GO_HOME");
       currentState = GO_HOME;
@@ -297,9 +300,9 @@ float checkBatteries(int pin) {
 void flashPixyLight(int times) {
   for (int i = 0; i < times; i++) {
     pixy.setLamp(1, 1); // LEDs ON
-    delay(200);
+    delay(100);
     pixy.setLamp(0, 0); // LEDs OFF
-    delay(200);
+    delay(100);
   }
 }
 
@@ -308,7 +311,7 @@ bool legoManAlign(int thresholdX, int thresholdY, const Block* block, int numBlo
   debugPrint("Shayla x: " + String(x) + "   |   y: " + String(y));
 
   if (x >= 0 && y >= 0) {
-    int x_error = X_CENTER - x; // positive if legoman is to the left, negative if legoman is to the right
+    int x_error = (X_CENTER + 4) - x; // positive if legoman is to the left, negative if legoman is to the right
     debugPrint("Shayla x_error: " + String(x_error));
 
     if (abs(x_error) < thresholdX && y > thresholdY) { 
@@ -323,42 +326,46 @@ bool legoManAlign(int thresholdX, int thresholdY, const Block* block, int numBlo
         // drive forward only once Shayla is centered
         if (y < thresholdY) { // Legoman is too far, drive forward slowly
           debugPrint("Legoman is too far");
-          leftMotor.setSpeed(65);
-          rightMotor.setSpeed(65);
+          leftMotor.setSpeed(75);
+          rightMotor.setSpeed(75);
           debugPrint("Left PWM: " + String(leftMotor.getSpeed()) + "  |   Right PWM: " + String(rightMotor.getSpeed()));
           delay(100);
           leftMotor.setSpeed(0);
           rightMotor.setSpeed(0);
-          delay(200);
+          delay(100);
         }
       }
       else if (abs(x_error) > thresholdX) {    // Turn robot on it's center axis
         debugPrint("Legoman is not centered");
-        //int turnSpeed = abs(x_error * LEGO_KPx);    // Positive means turn right, negative means turn left
         if (x_error > 0) {   // Positive means turns left  
           leftMotor.setSpeed(0);
-          rightMotor.setSpeed(65);
+          rightMotor.setSpeed(75);
           delay(100);
           debugPrint("Left PWM: " + String(leftMotor.getSpeed()) + "  |   Right PWM: " + String(rightMotor.getSpeed()));
           leftMotor.setSpeed(0);
           rightMotor.setSpeed(0);
-          delay(200); 
-
+          delay(100); 
         }
         else if (x_error < 0) {  // Negative means turns right
-          leftMotor.setSpeed(65);
+          leftMotor.setSpeed(75);
           rightMotor.setSpeed(0);
           debugPrint("Left PWM: " + String(leftMotor.getSpeed()) + "  |   Right PWM: " + String(rightMotor.getSpeed()));
           delay(100);
           leftMotor.setSpeed(0);
           rightMotor.setSpeed(0);
-          delay(200);
+          delay(100);
         }
       }
     }
   } else {   // Lego man not detected, TODO: spin till in view 
-    leftMotor.stop();
-    rightMotor.stop();
+    debugPrint("Shayla is not found, pulsing forward");
+    leftMotor.setSpeed(75);
+    rightMotor.setSpeed(75);
+    debugPrint("Left PWM: " + String(leftMotor.getSpeed()) + "  |   Right PWM: " + String(rightMotor.getSpeed()));
+    delay(100);
+    leftMotor.setSpeed(0);
+    rightMotor.setSpeed(0);
+    delay(150);
   }
   return false;
 }
