@@ -43,17 +43,17 @@ void TurnController::turnDegrees(float degrees, int turnSpeed) {
     rightMotor.stop();
 }
 
-void TurnController::turnToRedLine(int turnSpeed, const Block* block, int numBlock)
+void TurnController::turnToShayla(int turnSpeed, const Block* block, int numBlock)
 {
     float turnCircumference = PI * WHEEL_BASE;
-    float arcLength = (30.0 / 360.0) * turnCircumference;
+    float arcLength = (10.0 / 360.0) * turnCircumference;
     float metersPerTick = wheelCircumference / COUNTS_PER_WHEEL_REV;
     long targetTicks = arcLength / metersPerTick;
 
     int spinLimit = 0;
-    bool foundRedLine = false;
+    bool foundShayla = false;
 
-    while (!foundRedLine && spinLimit < 12) {
+    while (!foundShayla && spinLimit < 24) {
         leftEncoder.reset();
         rightEncoder.reset();
 
@@ -75,22 +75,73 @@ void TurnController::turnToRedLine(int turnSpeed, const Block* block, int numBlo
 
         if (numBlock > 0) {
             for (int i = 0; i < numBlock; i++) {
-                if (block[i].m_signature == REDLINE_SIG) {
-                    debugPrint("Red line detected.");
-                    foundRedLine = true;
+                if (block[i].m_signature == LEGO_SIG) {
+                    debugPrint("Found shayla.");
+                    foundShayla = true;
                     break;
                 }
             }
         }
 
-        if (!foundRedLine) {
-            debugPrint("No red line detected.");
+        if (!foundShayla) {
+            debugPrint("Still can't find Shayla.");
             spinLimit++;
             if (spinLimit >= 12) {
-                debugPrint("Spun 360 degrees and no red line found. Exiting.");
+                debugPrint("Spun 360 degrees and no Shayla found. Exiting.");
             }
         }
 
         delay(200); // Optional pause before next spin
     }
 }
+
+// void TurnController::turnToLegoMan(int turnSpeed, const Block *block, int numBlock)
+// {    float turnCircumference = PI * WHEEL_BASE;
+//     float arcLength = (30.0 / 360.0) * turnCircumference;
+//     float metersPerTick = wheelCircumference / COUNTS_PER_WHEEL_REV;
+//     long targetTicks = arcLength / metersPerTick;
+
+//     int spinLimit = 0;
+//     bool foundRedLine = false;
+
+//     while (!foundRedLine && spinLimit < 12) {
+//         leftEncoder.reset();
+//         rightEncoder.reset();
+
+//         // Determine turn direction
+//         int leftSpeed = turnSpeed;
+//         int rightSpeed = -turnSpeed;
+
+//         leftMotor.setSpeed(leftSpeed);
+//         rightMotor.setSpeed(rightSpeed);
+
+//         while (abs(leftEncoder.getTicks()) < targetTicks && abs(rightEncoder.getTicks()) < targetTicks) {
+//             BTSerial.print("Left ticks: "); BTSerial.print(abs(leftEncoder.getTicks()));
+//             BTSerial.print(" | Right ticks: "); BTSerial.println(abs(rightEncoder.getTicks()));
+//             delay(10);
+//         }
+
+//         leftMotor.stop();
+//         rightMotor.stop();
+
+//         if (numBlock > 0) {
+//             for (int i = 0; i < numBlock; i++) {
+//                 if (block[i].m_signature == REDLINE_SIG) {
+//                     debugPrint("Red line detected.");
+//                     foundRedLine = true;
+//                     break;
+//                 }
+//             }
+//         }
+
+//         if (!foundRedLine) {
+//             debugPrint("No red line detected.");
+//             spinLimit++;
+//             if (spinLimit >= 12) {
+//                 debugPrint("Spun 360 degrees and no red line found. Exiting.");
+//             }
+//         }
+
+//         delay(200); // Optional pause before next spin
+//     }
+// }
