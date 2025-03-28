@@ -23,7 +23,7 @@ void TurnController::turnDegrees(float degrees, int turnSpeed) {
 
     // Determine turn direction
     int leftSpeed = degrees > 0 ? turnSpeed : -turnSpeed;
-    int rightSpeed = -leftSpeed;
+    int rightSpeed = -(leftSpeed+4);
 
     // Start turning
     leftMotor.setSpeed(leftSpeed);
@@ -46,20 +46,20 @@ void TurnController::turnDegrees(float degrees, int turnSpeed) {
 void TurnController::turnToShayla(int turnSpeed, const Block* block, int numBlock)
 {
     float turnCircumference = PI * WHEEL_BASE;
-    float arcLength = (10.0 / 360.0) * turnCircumference;
+    float arcLength = (20.0 / 360.0) * turnCircumference;
     float metersPerTick = wheelCircumference / COUNTS_PER_WHEEL_REV;
     long targetTicks = arcLength / metersPerTick;
 
     int spinLimit = 0;
     bool foundShayla = false;
 
-    while (!foundShayla && spinLimit < 24) {
+    while (!foundShayla && spinLimit < (360/20)) {
         leftEncoder.reset();
         rightEncoder.reset();
 
         // Determine turn direction
         int leftSpeed = turnSpeed;
-        int rightSpeed = -turnSpeed;
+        int rightSpeed = -(turnSpeed+4);
 
         leftMotor.setSpeed(leftSpeed);
         rightMotor.setSpeed(rightSpeed);
@@ -86,7 +86,7 @@ void TurnController::turnToShayla(int turnSpeed, const Block* block, int numBloc
         if (!foundShayla) {
             debugPrint("Still can't find Shayla.");
             spinLimit++;
-            if (spinLimit >= 12) {
+            if (spinLimit >= (360/20)) {
                 debugPrint("Spun 360 degrees and no Shayla found. Exiting.");
             }
         }
@@ -95,7 +95,42 @@ void TurnController::turnToShayla(int turnSpeed, const Block* block, int numBloc
     }
 }
 
-// void TurnController::turnToLegoMan(int turnSpeed, const Block *block, int numBlock)
+// void repositionToShay(int turnSpeed, int degrees, int drivr) {
+//     // Reset encoders
+//     leftEncoder.reset();
+//     rightEncoder.reset();
+
+//     // Calculate the arc length each wheel needs to travel
+//     float turnCircumference = PI * WHEEL_BASE;
+//     float arcLength = (abs(degrees) / 360.0) * turnCircumference;  // meters
+
+//     // Calculate equivalent encoder ticks for this arc length
+//     float metersPerTick = wheelCircumference / COUNTS_PER_WHEEL_REV;
+//     long targetTicks = arcLength / metersPerTick;
+
+//     // Determine turn direction
+//     int leftSpeed = degrees > 0 ? turnSpeed : -turnSpeed;
+//     int rightSpeed = -(leftSpeed+4);
+
+//     // Start turning
+//     leftMotor.setSpeed(leftSpeed);
+//     rightMotor.setSpeed(rightSpeed);
+
+//     // Monitor encoder ticks until target reached
+//     while (abs(leftEncoder.getTicks()) < targetTicks && abs(rightEncoder.getTicks()) < targetTicks) {
+//         // Optionally print progress
+//         BTSerial.print("Left ticks: "); BTSerial.print(abs(leftEncoder.getTicks()));
+//         BTSerial.print(" | Right ticks: "); BTSerial.print(abs(rightEncoder.getTicks()));
+//         BTSerial.print(" | Target ticks: "); BTSerial.println(targetTicks);
+//         delay(10);
+//     }
+
+//     // Stop motors after turn
+//     leftMotor.stop();
+//     rightMotor.stop();    
+// }
+
+// void TurnController::turnToLegoMan(int turnSpeed, const Block* block, int numBlock)
 // {    float turnCircumference = PI * WHEEL_BASE;
 //     float arcLength = (30.0 / 360.0) * turnCircumference;
 //     float metersPerTick = wheelCircumference / COUNTS_PER_WHEEL_REV;

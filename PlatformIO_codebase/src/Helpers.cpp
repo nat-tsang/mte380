@@ -4,6 +4,8 @@ bool robotRunning = false;     // Global state flag
 bool SYSTEM_SHUTDOWN = false;  // Set to true to enable shutdown
 static int buttonPin;
 static bool lastButtonState = LOW;  // Default LOW due to external pull-down
+int rightbasePWM = 66;
+int leftbasePWM = 66;
 
 void initButton(int pin) {
     buttonPin = pin;
@@ -48,7 +50,7 @@ void logWithTimestamp() {
 }
 
 void debugPrint(String msg) {
-    logWithTimestamp();
+    // logWithTimestamp();
     Serial.println(msg);
     BTSerial.println(msg);
 }

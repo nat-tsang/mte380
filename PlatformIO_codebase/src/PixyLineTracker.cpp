@@ -55,11 +55,16 @@ void PixyLineTracker::setBullseye(bool status)
     bullseyeDetected = status;
 }
 
-bool PixyLineTracker::findBullseye(int xCrit, int yCrit, int xLim, int yLim, const Block* block, int numBlock) {
+bool PixyLineTracker::findBullseye(int xCrit, int yCrit, int xLim, int yLim, const Block* block, int numBlock, Motor leftMotor, Motor rightMotor) {
     if (numBlock) {
         for (int i = 0; i < numBlock; i++) {
             if (block[i].m_signature == BULLSEYE_SIG) {
+                // bullseyeDetected = true;
+                leftbasePWM = 50;
+                rightbasePWM = 50;
+                rightMotor.setSpeed(50);
                 int x_range = abs(xCrit - block[i].m_x);
+                // BTSerial.println("x: " + &block[i].m_x + "   y: " + &block[i].m_y + " angle: " + block[i].m_angle);
                 // int y_range = abs(yCrit - block[i].m_y);
                 if (block[i].m_y > yCrit && x_range < xLim) {
                     bullseyeDetected = true;

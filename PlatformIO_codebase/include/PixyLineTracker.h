@@ -1,6 +1,7 @@
 #pragma once
 #include <Pixy2.h>
 #include <Arduino.h>
+#include <Helpers.h>
 #include <tuple>
 
 class PixyLineTracker {     // TODO: Can change class to be PixyColourTracker and pass in the signature
@@ -25,7 +26,7 @@ public:
     // Methods
     float readLinePosition(const Block* block, int numBlock);
     std::tuple<int16_t, int16_t> getPixyCoord(int blockSig, const Block* block, int numBlock);
-    bool findBullseye(int xCrit, int yCrit, int xLim, int yLim, const Block* block, int numBlock);
+    bool findBullseye(int xCrit, int yCrit, int xLim, int yLim, const Block* block, int numBlock, Motor leftMotor, Motor rightMotor);
 
     // Getters
     bool getLineDetected() const;

@@ -190,7 +190,8 @@ void loop() {
     }
 
     case LEGOMAN_ALIGN: {
-      turnController.turnDegrees(5,65);
+      turnController.turnToShayla(70,blocks,numBlocks);
+      delay(3000);
       if (legoManAlign(40, 140, blocks, numBlocks)) {
         debugPrint("Legoman centered. ");
         currentState = PICKUP_LEGOMAN;
