@@ -95,7 +95,7 @@ void loop() {
       debugPrint("Switching to LINE_FOLLOWING");
       gripper.open();  // Optional: ready for pickup
       lineTracker.setBullseye(false);
-      currentState = LINE_FOLLOW_PICKUP;
+      currentState = LINE_FOLLOW_DROPOFF;
     } else {
       debugPrint("Switching to IDLE");
       hasTurned = false;
@@ -251,7 +251,6 @@ void flashPixyLight(int times) {
   }
 }
 
-
 bool legoManAlign(int thresholdX, int thresholdY, const Block* block, int numBlock) {     // TODO: Do we need to call get blocks again?
   auto [x, y] = lineTracker.getPixyCoord(6, block, numBlock); // orange shayla is 6,  TODO: Put in config
   debugPrint("Shayla x: " + String(x) + "   |   y: " + String(y));
@@ -281,16 +280,12 @@ bool legoManAlign(int thresholdX, int thresholdY, const Block* block, int numBlo
       }
       else if (abs(x_error) > thresholdX) {    // Turn robot on it's center axis
         debugPrint("Legoman is not centered");
-        
-        int turnSpeed = abs(x_error * LEGO_KPx);    // Positive means turn right, negative means turn left
         if (x_error > 0) {   // Positive means turns left  
-          // leftMotor.setSpeed(-60 - turnSpeed);
           leftMotor.setSpeed(0);
           rightMotor.setSpeed(65);
         }
         else if (x_error < 0) {  // Negative means turns right
           leftMotor.setSpeed(65);
-          // rightMotor.setSpeed(-60 - turnSpeed);
           rightMotor.setSpeed(0);
         }
       }
