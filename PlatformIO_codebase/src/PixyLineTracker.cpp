@@ -78,7 +78,7 @@ void PixyLineTracker::setGreenBox(bool status)
 }
 
 
-bool PixyLineTracker::findBullseye(int xCrit, int yCrit, int xLim, int yLim, const Block* block, int numBlock) {
+bool PixyLineTracker::findBullseye(int xCrit, int yCrit, int xLim, int yLim, const Block* block, int numBlock, Motor leftMotor, Motor rightMotor) {
     if (numBlock) {
         for (int i = 0; i < numBlock; i++) {
             if (block[i].m_signature == BULLSEYE_SIG) {

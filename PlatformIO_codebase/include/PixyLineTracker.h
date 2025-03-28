@@ -27,7 +27,7 @@ public:
     // Methods
     float readLinePosition(const Block* block, int numBlock);
     std::tuple<int16_t, int16_t> getPixyCoord(int blockSig, const Block* block, int numBlock);
-    bool findBullseye(int xCrit, int yCrit, int xLim, int yLim, const Block* block, int numBlock);
+    bool findBullseye(int xCrit, int yCrit, int xLim, int yLim, const Block* block, int numBlock, Motor leftMotor, Motor rightMotor);
     bool findGreenBox(int xCrit, int yCrit, int xLim, int yLim, const Block* block, int numBlock);
 
     // Getters
