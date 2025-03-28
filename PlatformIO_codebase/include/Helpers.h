@@ -4,6 +4,11 @@
 
 #define BTSerial Serial1
 
+extern int rightbasePWM;  // Base PWM value       PWM of 66 allows robot to stop straight on with bullseye
+extern int leftbasePWM;  // Base PWM value
+
+void flashPixyLight(int times);
+
 // Global robot run state
 extern bool robotRunning;
 extern bool SYSTEM_SHUTDOWN;

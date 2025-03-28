@@ -19,4 +19,6 @@ public:
     int getSpeed() const;
 
     void stop();
+
+    void brake();
 };

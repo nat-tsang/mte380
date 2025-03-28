@@ -34,3 +34,10 @@ int Motor::getSpeed() const {
 void Motor::stop() {
     setSpeed(0);
 }
+
+void Motor::brake()
+{
+    setSpeed(-62);
+    delay(200);
+    stop();
+}

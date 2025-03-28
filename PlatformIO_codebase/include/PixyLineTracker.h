@@ -1,6 +1,7 @@
 #pragma once
 #include <Pixy2.h>
 #include <Arduino.h>
+#include <Helpers.h>
 #include <tuple>
 
 class PixyLineTracker {     // TODO: Can change class to be PixyColourTracker and pass in the signature

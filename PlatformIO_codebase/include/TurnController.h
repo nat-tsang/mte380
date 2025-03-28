@@ -18,5 +18,7 @@ public:
 
     // Perform a turn (positive angle = right turn, negative = left turn)
     void turnDegrees(float degrees, int turnSpeed);
-    void turnToRedLine(int turnSpeed, const Block* block, int numBlock);
+    void turnToShayla(int turnSpeed, const Block* block, int numBlock);
+    // void repositionToShay(int degrees, int turnSpeed, int driveSpeed);
+    // void turnToRedLine(int turnSpeed, const Block* block, int numBlock);
 };
