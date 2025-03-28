@@ -50,7 +50,7 @@ void logWithTimestamp() {
 }
 
 void debugPrint(String msg) {
-    //// logWithTimestamp();
+    // logWithTimestamp();
     Serial.println(msg);
     BTSerial.println(msg);
 }

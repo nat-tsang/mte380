@@ -70,22 +70,14 @@ void PixyLineTracker::setGreenBox(bool status)
     greenBoxDetected = status;
 }
 
-
-
-void PixyLineTracker::setGreenBox(bool status)
-{
-    greenBoxDetected = status;
-}
-
-
 bool PixyLineTracker::findBullseye(int xCrit, int yCrit, int xLim, int yLim, const Block* block, int numBlock, Motor leftMotor, Motor rightMotor) {
     if (numBlock) {
         for (int i = 0; i < numBlock; i++) {
             if (block[i].m_signature == BULLSEYE_SIG) {
                 // bullseyeDetected = true;
-                leftbasePWM = 50;
-                rightbasePWM = 50;
-                rightMotor.setSpeed(50);
+                // leftbasePWM = 50;
+                // rightbasePWM = 50;
+                // rightMotor.setSpeed(50);
                 int x_range = abs(xCrit - block[i].m_x);
                 if (block[i].m_y > yCrit && x_range < xLim) {
                     bullseyeDetected = true;
@@ -103,7 +95,7 @@ bool PixyLineTracker::findGreenBox(int xCrit, int yCrit, int xLim, int yLim, con
             if (block[i].m_signature == GREEN_BOX_SIG) {
                 int centroidX = block[i].m_x;
                 int centroidY = block[i].m_y;
-                if (centroidY > 70) { // Check if the centroid is within the specified y limits
+                if (centroidY > 90) { // Check if the centroid is within the specified y limits
                     greenBoxDetected = true;
                 }
             }

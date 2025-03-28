@@ -119,17 +119,12 @@ void loop() {
       float pixyError = lineTracker.readLinePosition(blocks, numBlocks);  // +157.5 (far left drift) to -157.5 (far right drift)
 
       // TODO: Check in Pixy if the following parameters are correct
-      lineTracker.findBullseye(100, 40, 30, 20, blocks, numBlocks, leftMotor, rightMotor); // currently on nightime, 175, 50, 30, 20 (daytime) 175, 50, 50, 20 (more forgiving x)
+      lineTracker.findBullseye(100, 20, 30, 20, blocks, numBlocks, leftMotor, rightMotor); // currently on nightime, 175, 50, 30, 20 (daytime) 175, 50, 50, 20 (more forgiving x)
       if (lineTracker.getBullseye()) {
         leftMotor.stop();
         rightMotor.stop();
         debugPrint("Bullseye found in stopping range. Setting to LEGOMAN_ALIGN");
         flashPixyLight(1);
-        leftMotor.setSpeed(60);
-        rightMotor.setSpeed(60);
-        delay(200);
-        leftMotor.setSpeed(0);
-        rightMotor.setSpeed(0);  
         currentState = LEGOMAN_ALIGN;
         break;
       }
@@ -140,7 +135,7 @@ void loop() {
         linePID.reset();
         break; 
       }
-      debugPrint("Go shayla go ");
+      
       if (abs(pixyError) < 10.0) {
         pixyError = 0;
       }
@@ -154,7 +149,6 @@ void loop() {
     }
 
     case LEGOMAN_ALIGN: {
-      turnController.turnDegrees(20, 63); // Set turn speed for legoman alignment
       if (legoManAlign(40, 140, blocks, numBlocks)) {
         debugPrint("Legoman centered. Switching to PICKUP_LEGOMAN");
         currentState = PICKUP_LEGOMAN;
@@ -222,7 +216,7 @@ void loop() {
       delay(1000); // Wait for turn to complete
       leftMotor.setSpeed(65); // Move robot forward
       rightMotor.setSpeed(65);
-      delay(200); // Wait for robot to move forward
+      delay(400); // Wait for robot to move forward
       leftMotor.stop();
       rightMotor.stop();
       delay(500); // Wait for robot to stop
@@ -230,7 +224,7 @@ void loop() {
       delay(500); // Wait for gripper to open
       leftMotor.setSpeed(-65); // Reverse robot
       rightMotor.setSpeed(-65);
-      delay(300); // Wait for robot to reverse
+      delay(500); // Wait for robot to reverse
       leftMotor.stop();
       rightMotor.stop();
       turnController.turnDegrees(40, -70); // Turn back to face line
