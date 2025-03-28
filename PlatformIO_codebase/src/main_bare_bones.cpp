@@ -181,7 +181,7 @@ void loop() {
     }
 
     case LEGOMAN_ALIGN: {
-      if (legoManAlign(30, 135, blocks, numBlocks)) {
+      if (legoManAlign(40, 140, blocks, numBlocks)) {
         debugPrint("Legoman centered. Switching to PICKUP_LEGOMAN");
         currentState = PICKUP_LEGOMAN;
       }
@@ -253,16 +253,12 @@ void flashPixyLight(int times) {
 
 
 bool legoManAlign(int thresholdX, int thresholdY, const Block* block, int numBlock) {     // TODO: Do we need to call get blocks again?
-  
   auto [x, y] = lineTracker.getPixyCoord(6, block, numBlock); // orange shayla is 6,  TODO: Put in config
-  BTSerial.print("Shayla x: " + String(x));
-  BTSerial.print ("   |   y: " + String(y));
-  logWithTimestamp();
+  debugPrint("Shayla x: " + String(x) + "   |   y: " + String(y));
 
   if (x >= 0 && y >= 0) {
     int x_error = X_CENTER - x; // positive if legoman is to the left, negative if legoman is to the right
-    BTSerial.print("Shayla ERROR: " + String(x_error));
-    logWithTimestamp();
+    debugPrint("Shayla x_error: " + String(x_error));
 
     if (abs(x_error) < thresholdX && y > thresholdY) { 
       debugPrint("Legoman is centered, stopping");
@@ -276,8 +272,11 @@ bool legoManAlign(int thresholdX, int thresholdY, const Block* block, int numBlo
         // drive forward only once Shayla is centered
         if (y < thresholdY) { // Legoman is too far, drive forward slowly
           debugPrint("Legoman is too far");
-          leftMotor.setSpeed(63);
+          leftMotor.setSpeed(65);
           rightMotor.setSpeed(65);
+          delay(100);
+          leftMotor.setSpeed(0);
+          rightMotor.setSpeed(0);
         }
       }
       else if (abs(x_error) > thresholdX) {    // Turn robot on it's center axis
@@ -287,18 +286,16 @@ bool legoManAlign(int thresholdX, int thresholdY, const Block* block, int numBlo
         if (x_error > 0) {   // Positive means turns left  
           // leftMotor.setSpeed(-60 - turnSpeed);
           leftMotor.setSpeed(0);
-          rightMotor.setSpeed(63);
+          rightMotor.setSpeed(65);
         }
         else if (x_error < 0) {  // Negative means turns right
-          leftMotor.setSpeed(63);
+          leftMotor.setSpeed(65);
           // rightMotor.setSpeed(-60 - turnSpeed);
           rightMotor.setSpeed(0);
         }
       }
       // Print the current speed of the motors
-      BTSerial.print("Left PWM: " + String(leftMotor.getSpeed()));
-      BTSerial.print("  |   Right PWM: " + String(rightMotor.getSpeed()));
-      logWithTimestamp();
+      debugPrint("Left PWM: " + String(leftMotor.getSpeed()) + "  |   Right PWM: " + String(rightMotor.getSpeed()));
     }
   } else {   // Lego man not detected, TODO: spin till in view 
     leftMotor.stop();

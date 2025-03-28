@@ -42,13 +42,13 @@ String getTimestamp() {
   }
 
 void logWithTimestamp() {
-    BTSerial.print("  [");
+    BTSerial.print("[");
     BTSerial.print(getTimestamp());
-    BTSerial.println("] ");
+    BTSerial.print("] ");
 }
 
 void debugPrint(String msg) {
-    Serial.println(msg);
-    BTSerial.print(msg);
     logWithTimestamp();
+    Serial.println(msg);
+    BTSerial.println(msg);
 }
