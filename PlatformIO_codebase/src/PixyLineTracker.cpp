@@ -7,6 +7,7 @@ PixyLineTracker::PixyLineTracker(){}
 void PixyLineTracker::begin() {
   pixy.init();
   bullseyeDetected = false;
+  greenBoxDetected = false;
 }
 
 float PixyLineTracker::readLinePosition(const Block* block, int numBlock) {
@@ -41,26 +42,40 @@ bool PixyLineTracker::getLineDetected() const {
     return lineDetected;
 }
 
+
 bool PixyLineTracker::getBullseye() const {
     return bullseyeDetected;
 }
+
+
+bool PixyLineTracker::getGreenBox() const {
+    return greenBoxDetected;
+}
+
 
 void PixyLineTracker::setLineDetected(bool status)
 {
     lineDetected = status;
 }
 
+
 void PixyLineTracker::setBullseye(bool status)
 {
     bullseyeDetected = status;
 }
+
+
+void PixyLineTracker::setGreenBox(bool status)
+{
+    greenBoxDetected = status;
+}
+
 
 bool PixyLineTracker::findBullseye(int xCrit, int yCrit, int xLim, int yLim, const Block* block, int numBlock) {
     if (numBlock) {
         for (int i = 0; i < numBlock; i++) {
             if (block[i].m_signature == BULLSEYE_SIG) {
                 int x_range = abs(xCrit - block[i].m_x);
-                // int y_range = abs(yCrit - block[i].m_y);
                 if (block[i].m_y > yCrit && x_range < xLim) {
                     bullseyeDetected = true;
                 }
@@ -68,6 +83,22 @@ bool PixyLineTracker::findBullseye(int xCrit, int yCrit, int xLim, int yLim, con
         }
     }
     return bullseyeDetected;
+}
+
+
+bool PixyLineTracker::findGreenBox(int xCrit, int yCrit, int xLim, int yLim, const Block* block, int numBlock) {
+    if (numBlock) {
+        for (int i = 0; i < numBlock; i++) {
+            if (block[i].m_signature == GREEN_BOX_SIG) {
+                int centroidX = block[i].m_x;
+                int centroidY = block[i].m_y;
+                if (centroidY > 70) { // Check if the centroid is within the specified y limits
+                    greenBoxDetected = true;
+                }
+            }
+        }
+    }
+    return greenBoxDetected;
 }
 
 void PixyLineTracker::setLampON()

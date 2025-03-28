@@ -9,6 +9,7 @@ private:
     int lastX;          // Last known x-position of the red blob (centered is 160)
     bool lineDetected;  // Flag to indicate if the red line is detected
     bool bullseyeDetected;
+    bool greenBoxDetected;
     int blockSig;
     int xCrit;
     int yCrit;
@@ -26,15 +27,17 @@ public:
     float readLinePosition(const Block* block, int numBlock);
     std::tuple<int16_t, int16_t> getPixyCoord(int blockSig, const Block* block, int numBlock);
     bool findBullseye(int xCrit, int yCrit, int xLim, int yLim, const Block* block, int numBlock);
+    bool findGreenBox(int xCrit, int yCrit, int xLim, int yLim, const Block* block, int numBlock);
 
     // Getters
     bool getLineDetected() const;
     bool getBullseye() const;
+    bool getGreenBox() const;
 
     // Setters
     void setLineDetected(bool status);
     void setBullseye(bool status);
-
+    void setGreenBox(bool status);
 
     void setLampON();
     void setLampOFF();
