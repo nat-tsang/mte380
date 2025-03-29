@@ -4,8 +4,8 @@ bool robotRunning = false;     // Global state flag
 bool SYSTEM_SHUTDOWN = false;  // Set to true to enable shutdown
 static int buttonPin;
 static bool lastButtonState = LOW;  // Default LOW due to external pull-down
-int rightbasePWM = 66;
-int leftbasePWM = 66;
+int rightbasePWM = 95;
+int leftbasePWM = 95;
 
 void initButton(int pin) {
     buttonPin = pin;
